@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone } from 'lucide-react';
-import { Module, Lesson, Plan, Announcement } from '../types';
+import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone, Video } from 'lucide-react';
+import { Module, Lesson, Plan, Announcement, Course } from '../types';
 
 interface DashboardProps {
   user: any;
   modules: Module[];
   lessons: Lesson[];
   plans: Plan[];
+  courses: Course[];
   progress: any[];
   onStartLesson: (lesson: Lesson) => void;
   onLogout: () => void;
@@ -15,13 +16,15 @@ interface DashboardProps {
   onOpenProfile: () => void;
   announcement?: Announcement;
   onAnnouncementClick?: (id: string) => void;
+  onCourseClick?: (id: string) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, modules, lessons, plans, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick 
+  user, modules, lessons, plans, courses, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick, onCourseClick 
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
+  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const userPlan = plans.find(p => p.id === user.plan_id);
   const accessibleModuleIds = userPlan?.accessible_modules || [];
   
@@ -88,34 +91,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100">
       {/* Sidebar */}
-      <aside className="w-full lg:w-[360px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 overflow-y-auto max-h-screen">
-        <div className="p-6">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30">
+      <aside className="w-full lg:w-[280px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 lg:h-screen overflow-hidden">
+        <div className="p-5 flex flex-col h-full overflow-y-auto scrollbar-hide">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/30">
               D
             </div>
             <div>
-              <span className="block font-black text-xl text-zinc-900 dark:text-white tracking-tight leading-none">Digitação Sem Segredo</span>
-              <span className="text-[10px] font-bold text-blue-500 tracking-widest uppercase">{userPlan?.name || 'Iniciante'}</span>
+              <span className="block font-black text-lg text-zinc-900 dark:text-white tracking-tight leading-none">Digitação Sem Segredo</span>
+              <span className="text-[9px] font-bold text-blue-500 tracking-widest uppercase">{userPlan?.name || 'Iniciante'}</span>
             </div>
           </div>
 
-
-          <nav className="space-y-1 mb-10">
-            <button className="w-full flex items-center gap-3 px-5 py-3.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
-              <BookOpen className="w-5 h-5 flex-shrink-0" /> <span className="text-base">Módulos</span>
+          <nav className="space-y-1 mb-6">
+            <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
+              <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">AULAS</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-5 py-3.5 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all">
-              <MessageSquare className="w-5 h-5 flex-shrink-0" /> <span className="text-base">Comunidade</span>
+            <button 
+              onClick={() => setIsCoursesOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm">Cursos</span>
             </button>
             <button 
               onClick={() => setIsAchievementsOpen(true)}
-              className="w-full flex items-center gap-3 px-5 py-3.5 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group"
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group text-sm"
             >
-              <Award className="w-5 h-5 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> 
-              <span className="text-base">Conquistas</span>
+              <Award className="w-4 h-4 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> 
+              <span className="text-sm">Conquistas</span>
               {achievements.filter(a => a.completed).length > 0 && (
-                <span className="ml-auto bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full">
+                <span className="ml-auto bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[9px] font-black px-1.5 py-0.5 rounded-full">
                   {achievements.filter(a => a.completed).length}
                 </span>
               )}
@@ -123,22 +128,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </nav>
 
           {/* Stats Sections */}
-          <div className="space-y-6">
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-inner">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-white dark:bg-zinc-700 rounded-lg text-blue-500 shadow-sm">
-                  <Activity className="w-5 h-5" />
+          <div className="space-y-4">
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-[28px] border border-zinc-100 dark:border-zinc-800 shadow-inner">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-1.5 bg-white dark:bg-zinc-700 rounded-lg text-blue-500 shadow-sm">
+                  <Activity className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-black text-zinc-800 dark:text-white uppercase tracking-wider">Meu Progresso</h3>
+                <h3 className="text-xs font-black text-zinc-800 dark:text-white uppercase tracking-wider">Meu Progresso</h3>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-[10px] font-black mb-2">
-                    <span className="text-zinc-400 uppercase tracking-widest">Módulos Concluídos</span>
+                  <div className="flex justify-between text-[9px] font-black mb-1.5">
+                    <span className="text-zinc-400 uppercase tracking-widest">Concluído</span>
                     <span className="text-blue-500 font-black">{completedModulesCount} / {modules.length}</span>
                   </div>
-                  <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-blue-500 rounded-full transition-all duration-1000" 
                       style={{ width: `${progressPercent}%` }} 
@@ -146,85 +151,85 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white dark:bg-zinc-700 p-4 rounded-xl border border-zinc-100 dark:border-zinc-600 shadow-sm text-center">
-                    <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-1">Média PPM</span>
-                    <span className="text-2xl font-black text-zinc-900 dark:text-white">{avgWpm}</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white dark:bg-zinc-700 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-600 shadow-sm text-center">
+                    <span className="block text-[7px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Média PPM</span>
+                    <span className="text-lg font-black text-zinc-900 dark:text-white">{avgWpm}</span>
                   </div>
-                  <div className="bg-white dark:bg-zinc-700 p-4 rounded-xl border border-zinc-100 dark:border-zinc-600 shadow-sm text-center">
-                    <span className="block text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-1">Lições</span>
-                    <span className="text-2xl font-black text-zinc-900 dark:text-white">{uniqueCompletedLessonIds.size}</span>
+                  <div className="bg-white dark:bg-zinc-700 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-600 shadow-sm text-center">
+                    <span className="block text-[7px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Lições</span>
+                    <span className="text-lg font-black text-zinc-900 dark:text-white">{uniqueCompletedLessonIds.size}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* User Profile Card - Moved here above Plan Card */}
+            {/* User Profile Card */}
             <div 
               onClick={onOpenProfile}
-              className="group relative p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer"
+              className="group relative p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white dark:bg-zinc-700 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
-                  <User className="w-6 h-6 text-zinc-400" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
+                  <User className="w-5 h-5 text-zinc-400" />
                 </div>
                 <div className="flex flex-col flex-1 overflow-hidden">
-                  <span className="text-base font-bold text-zinc-900 dark:text-white truncate">{user.full_name}</span>
-                  <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
-                    <Activity className="w-3 h-3" /> Ver Perfil
+                  <span className="text-xs font-bold text-zinc-900 dark:text-white truncate">{user.full_name}</span>
+                  <span className="text-[9px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
+                    <Activity className="w-2.5 h-2.5" /> Ver Perfil
                   </span>
                 </div>
-                <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+                <SettingsIcon className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
               </div>
             </div>
 
-            <div className="relative overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-950 p-6 rounded-3xl text-white shadow-xl border border-zinc-700/50">
-              <div className="absolute -top-6 -right-6 opacity-10">
-                <Award className="w-24 h-24" />
+            <div className="relative overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-950 p-4.5 rounded-[28px] text-white shadow-xl border border-zinc-700/50">
+              <div className="absolute -top-4 -right-4 opacity-10">
+                <Award className="w-16 h-16" />
               </div>
-              <h3 className="text-lg font-black mb-2 flex items-center gap-2">
-                <Crown className="w-5 h-5 text-amber-400" /> Plano {userPlan?.name || 'Gratuito'}
+              <h3 className="text-sm font-black mb-1 flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-400" /> Plano {userPlan?.name || 'Gratuito'}
               </h3>
-              <p className="text-zinc-400 text-xs mb-6 leading-relaxed font-bold uppercase tracking-wider">
+              <p className="text-zinc-400 text-[9px] mb-4 font-bold uppercase tracking-wider">
                 {userPlan?.validity_days ? `${userPlan.validity_days} DIAS DE ACESSO` : 'ACESSO LIMITADO'}
               </p>
               <button 
                 onClick={() => setIsPlanDetailsOpen(true)}
-                className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-xs transition-all uppercase tracking-widest border border-white/10"
+                className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-black text-[9px] transition-all uppercase tracking-widest border border-white/10"
               >
                 Ver detalhes
               </button>
             </div>
+            
+            <div className="pt-2">
+              <button 
+                onClick={onLogout}
+                className="w-full flex items-center justify-center p-3 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-xl text-rose-500 font-black transition-all gap-2 text-[10px] uppercase tracking-widest border border-rose-100/50 dark:border-rose-500/20"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Sair do Sistema
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-auto p-6 border-t border-zinc-100 dark:border-zinc-800/50">
-          <button 
-            onClick={onLogout}
-            className="w-full flex items-center justify-center p-3.5 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-xl text-rose-500 font-black transition-all gap-2 text-sm uppercase tracking-widest"
-          >
-            <LogOut className="w-4 h-4" /> Sair do Sistema
-          </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-12 lg:p-16 overflow-y-auto bg-white/30 dark:bg-transparent">
+      <main className="flex-1 p-6 md:p-10 lg:p-14 overflow-y-auto bg-white/30 dark:bg-transparent">
         <div className="max-w-[1200px] mx-auto">
           {announcement && (
             <div 
-              className="mb-10 overflow-hidden rounded-[28px] py-4 shadow-xl shadow-black/5 border border-black/5 relative group"
+              className="mb-8 overflow-hidden rounded-[24px] py-3.5 shadow-xl shadow-black/5 border border-black/5 relative group"
               style={{ backgroundColor: announcement.bg_color }}
             >
-              <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
+              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
               
               <div className="flex items-center">
-                <div className="px-6 shrink-0 z-20 flex items-center gap-2">
-                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl" style={{ color: announcement.text_color }}>
-                    <Megaphone className="w-4 h-4 animate-bounce" />
+                <div className="px-5 shrink-0 z-20 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/20 backdrop-blur-md rounded-lg" style={{ color: announcement.text_color }}>
+                    <Megaphone className="w-3.5 h-3.5 animate-bounce" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70" style={{ color: announcement.text_color }}>Aviso:</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-70" style={{ color: announcement.text_color }}>Aviso:</span>
                 </div>
 
                 <div className="flex-1 overflow-hidden">
@@ -243,13 +248,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         target="_blank" 
                         rel="noreferrer"
                         onClick={() => onAnnouncementClick?.(announcement.id)}
-                        className="font-extrabold text-lg uppercase tracking-tight hover:underline flex items-center gap-3 px-4"
+                        className="font-extrabold text-base uppercase tracking-tight hover:underline flex items-center gap-3 px-4"
                         style={{ color: announcement.text_color }}
                       >
-                        {announcement.content} <ArrowRight className="w-5 h-5 inline opacity-50" />
+                        {announcement.content} <ArrowRight className="w-4 h-4 inline opacity-50" />
                       </a>
                     ) : (
-                      <span className="font-extrabold text-lg uppercase tracking-tight px-4" style={{ color: announcement.text_color }}>
+                      <span className="font-extrabold text-base uppercase tracking-tight px-4" style={{ color: announcement.text_color }}>
                         {announcement.content}
                       </span>
                     )}
@@ -259,11 +264,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           )}
 
-          <header className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-3 tracking-tight">
+          <header className="mb-8">
+            <h1 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight">
               Olá, {user.full_name.split(' ')[0]}! 👋
             </h1>
-            <p className="text-lg text-zinc-500 font-medium tracking-tight">Excelente dia para praticar sua digitação.</p>
+            <p className="text-base text-zinc-500 font-medium tracking-tight">Excelente dia para praticar sua digitação.</p>
           </header>
 
           {/* Upgrade Prompt if finishes accessible modules */}
@@ -300,28 +305,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 const isCompleted = isModuleCompleted(module.id);
 
                 return (
-                  <section key={module.id} className={`space-y-8 ${isLocked ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                    <div className="flex items-center justify-between border-b-2 border-zinc-100 dark:border-zinc-800 pb-6">
-                      <div className="flex items-center gap-6">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black border-2 transition-all ${isCompleted ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-white dark:bg-zinc-800 text-blue-500 border-zinc-100 dark:border-zinc-700'}`}>
+                  <section key={module.id} className={`space-y-12 ${isLocked ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                    <div className="flex items-center justify-between bg-zinc-100/50 dark:bg-zinc-800/30 p-8 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm transition-all hover:shadow-md">
+                      <div className="flex items-center gap-8">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black border-2 transition-all ${isCompleted ? 'bg-emerald-500 text-white border-emerald-500 shadow-xl shadow-emerald-500/30' : 'bg-white dark:bg-zinc-800 text-blue-600 border-zinc-200 dark:border-zinc-700 shadow-inner'}`}>
                           {idx + 1}
                         </div>
                         <div>
-                          <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">{module.title}</h2>
-                          <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">{module.description}</p>
+                          <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-1">{module.title}</h2>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-[0.2em]">{module.description}</p>
                         </div>
                       </div>
                       <div className="hidden md:flex items-center gap-2">
                         {isLocked ? (
-                          <div className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-zinc-400 text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">
+                          <div className="flex items-center gap-3 px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-400 text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700">
                             <Lock className="w-3.5 h-3.5" /> Módulo Bloqueado
                           </div>
                         ) : isCompleted ? (
-                          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">
+                          <div className="flex items-center gap-3 px-5 py-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-500/20">
                             <CheckCircle className="w-3.5 h-3.5" /> Concluído
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
+                          <div className="flex items-center gap-3 px-5 py-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-2xl text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
                             <Activity className="w-3.5 h-3.5" /> Em Progresso
                           </div>
                         )}
@@ -632,6 +637,97 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="p-8 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-center">
                 <button onClick={() => setIsPlanDetailsOpen(false)} className="text-zinc-400 font-black text-xs uppercase tracking-[0.2em] hover:text-zinc-600 transition-colors">Fechar Detalhes</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Courses Modal */}
+      <AnimatePresence>
+        {isCoursesOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-4xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col"
+            >
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
+                <div>
+                  <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                    <Video className="w-6 h-6 text-blue-500" /> Nossos Cursos
+                  </h2>
+                  <p className="text-zinc-500 text-sm font-bold mt-1">Avance seus conhecimentos com nossos cursos especializados com certificado.</p>
+                </div>
+                <button onClick={() => setIsCoursesOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto space-y-6">
+                {courses.filter(c => c.active).length === 0 ? (
+                  <div className="text-center py-12">
+                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Nenhum curso disponível no momento.</p>
+                  </div>
+                ) : (
+                  courses.filter(c => c.active).map((course) => (
+                    <div key={course.id} className="group flex flex-col md:flex-row bg-white dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex-1 p-8">
+                        <div className="flex justify-between items-start gap-4 mb-4">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white leading-tight uppercase tracking-tight">{course.title}</h3>
+                          {course.promotional_price && (
+                            <span className="shrink-0 px-3 py-1 bg-rose-500 text-white text-[10px] font-black rounded-lg uppercase tracking-widest animate-pulse">
+                              Oferta Especial
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 font-medium mb-6 leading-relaxed">
+                          {course.description}
+                        </p>
+                        
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                          <div>
+                            {course.promotional_price ? (
+                              <div className="flex flex-col">
+                                <span className="text-xs text-emerald-500 font-black uppercase tracking-widest mb-1">
+                                  Valor Promocional
+                                </span>
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-sm text-zinc-400 font-bold line-through">
+                                    de R$ {course.price.toFixed(2).replace('.', ',')}
+                                  </span>
+                                  <span className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                    por R$ {course.promotional_price.toFixed(2).replace('.', ',')}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col">
+                                <span className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">
+                                  Investimento
+                                </span>
+                                <span className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
+                                  R$ {course.price.toFixed(2).replace('.', ',')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <a 
+                            href={course.payment_url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            onClick={() => onCourseClick?.(course.id)}
+                            className="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
+                          >
+                            Veja a Oferta no Site <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           </div>

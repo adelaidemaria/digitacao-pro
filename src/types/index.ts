@@ -71,3 +71,16 @@ export interface Announcement {
   target_plans: string[];
   created_at?: string;
 }
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  promotional_price?: number;
+  payment_url: string;
+  active: boolean;
+  clicks: number;
+  order: number;
+  created_at?: string;
+}

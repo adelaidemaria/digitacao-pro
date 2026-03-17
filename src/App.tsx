@@ -4,7 +4,7 @@ import { Login } from './views/Login';
 import { Dashboard } from './views/Dashboard';
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
-import { Module, Lesson, Profile, Plan } from './types';
+import { Module, Lesson, Profile, Plan, Course } from './types';
 import { X, Volume2, Type, Keyboard, Monitor, User, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
@@ -208,6 +208,7 @@ const AppContent: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<any[]>([]);
@@ -243,15 +244,17 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [modulesRes, lessonsRes, announcementsRes] = await Promise.all([
+        const [modulesRes, lessonsRes, announcementsRes, coursesRes] = await Promise.all([
           supabase.from('modules').select('*').order('order'),
           supabase.from('lessons').select('*').order('order'),
-          supabase.from('announcements').select('*').order('created_at', { ascending: false })
+          supabase.from('announcements').select('*').order('created_at', { ascending: false }),
+          supabase.from('courses').select('*').order('order')
         ]);
 
         if (modulesRes.data) setModules(modulesRes.data);
         if (lessonsRes.data) setLessons(lessonsRes.data);
         if (announcementsRes.data) setAnnouncements(announcementsRes.data);
+        if (coursesRes.data) setCourses(coursesRes.data);
         
         await fetchPlans();
       } catch (err) {
@@ -474,6 +477,30 @@ const AppContent: React.FC = () => {
       if (!error) {
         setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, clicks: newClicks } : a));
       }
+    },
+
+    // Courses
+    saveCourse: async (courseData: Course) => {
+      const payload = { ...courseData };
+      if (!payload.id) delete (payload as any).id;
+
+      const { error } = await supabase.from('courses').upsert(payload);
+      if (!error) {
+        const { data } = await supabase.from('courses').select('*').order('order');
+        if (data) setCourses(data);
+      }
+    },
+    deleteCourse: async (id: string) => {
+      const { error } = await supabase.from('courses').delete().eq('id', id);
+      if (!error) setCourses(prev => prev.filter(c => c.id !== id));
+    },
+    incrementCourseClick: async (id: string) => {
+      const { data: current } = await supabase.from('courses').select('clicks').eq('id', id).single();
+      const newClicks = (current?.clicks || 0) + 1;
+      const { error } = await supabase.from('courses').update({ clicks: newClicks }).eq('id', id);
+      if (!error) {
+        setCourses(prev => prev.map(c => c.id === id ? { ...c, clicks: newClicks } : c));
+      }
     }
   };
 
@@ -498,6 +525,7 @@ const AppContent: React.FC = () => {
           modules={modules}
           lessons={lessons}
           plans={plans}
+          courses={courses}
           progress={progress}
           onStartLesson={handleStartLesson}
           onLogout={() => setView('login')}
@@ -505,6 +533,7 @@ const AppContent: React.FC = () => {
           onOpenProfile={() => setIsProfileOpen(true)}
           announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
+          onCourseClick={adminHandlers.incrementCourseClick}
         />
       )}
 
@@ -516,6 +545,7 @@ const AppContent: React.FC = () => {
           lessons={lessons}
           plans={plans}
           announcements={announcements}
+          courses={courses}
           onLogout={() => setView('login')}
           handlers={adminHandlers as any}
         />

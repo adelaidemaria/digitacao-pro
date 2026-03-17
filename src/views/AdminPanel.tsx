@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge } from 'lucide-react';
-import { Module, Lesson, Profile, Plan, Announcement } from '../types';
+import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge, Video } from 'lucide-react';
+import { Module, Lesson, Profile, Plan, Announcement, Course } from '../types';
 
 interface AdminPanelProps {
   user: Profile;
@@ -10,6 +10,7 @@ interface AdminPanelProps {
   lessons: Lesson[];
   plans: Plan[];
   announcements: Announcement[];
+  courses: Course[];
   onLogout: () => void;
   handlers: {
     saveUser: (user: Profile, password?: string) => void;
@@ -22,11 +23,13 @@ interface AdminPanelProps {
     deletePlan: (id: string) => void;
     saveAnnouncement: (announcement: Announcement) => void;
     deleteAnnouncement: (id: string) => void;
+    saveCourse: (course: Course) => void;
+    deleteCourse: (id: string) => void;
   };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], onLogout, handlers }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements'>('dashboard');
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], onLogout, handlers }) => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements' | 'courses'>('dashboard');
   
   // Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -40,6 +43,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   
   // Editing States
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -47,9 +51,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   // Delete confirmation state
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement', title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course', title: string } | null>(null);
   
   // Success feedback state
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -61,11 +66,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setIsLessonModalOpen(false);
     setIsPlanModalOpen(false);
     setIsAnnouncementModalOpen(false);
+    setIsCourseModalOpen(false);
     setEditingUser(null);
     setEditingModule(null);
     setEditingLesson(null);
     setEditingPlan(null);
     setEditingAnnouncement(null);
+    setEditingCourse(null);
     setConfirmDelete(null);
   };
 
@@ -90,6 +97,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     if (confirmDelete.type === 'lesson') handlers.deleteLesson(confirmDelete.id);
     if (confirmDelete.type === 'plan') handlers.deletePlan(confirmDelete.id);
     if (confirmDelete.type === 'announcement') handlers.deleteAnnouncement(confirmDelete.id);
+    if (confirmDelete.type === 'course') handlers.deleteCourse(confirmDelete.id);
     
     setConfirmDelete(null);
   };
@@ -155,6 +163,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
             >
               <Megaphone className="w-5 h-5 flex-shrink-0" /> Mensagens
             </button>
+            <button 
+              onClick={() => setActiveTab('courses')}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'courses' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+            >
+              <Video className="w-5 h-5 flex-shrink-0" /> Cursos
+            </button>
           </nav>
         </div>
 
@@ -173,7 +187,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight line-clamp-1 uppercase">
-              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : 'Mensagens em Destaque'}
+              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : activeTab === 'courses' ? 'Gestão de Cursos' : 'Mensagens em Destaque'}
             </h1>
             <p className="text-zinc-500 text-lg">
               {activeTab === 'dashboard' ? 'Bem-vindo de volta! Aqui está o resumo da sua plataforma.' : 'Administre e organize sua plataforma de ensino.'}
@@ -186,10 +200,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 if (activeTab === 'content') setIsModuleModalOpen(true);
                 if (activeTab === 'plans') setIsPlanModalOpen(true);
                 if (activeTab === 'announcements') setIsAnnouncementModalOpen(true);
+                if (activeTab === 'courses') setIsCourseModalOpen(true);
               }}
               className="flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap"
             >
-              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : 'Nova Mensagem'}
+              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : activeTab === 'courses' ? 'Novo Curso' : 'Nova Mensagem'}
             </button>
           )}
         </header>
@@ -664,6 +679,87 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
             </div>
           )}
+
+          {activeTab === 'courses' && (
+            <div className="flex flex-col">
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                    <Video className="w-4 h-4 text-blue-500" /> Cursos Disponíveis
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-16 text-center">Ordem</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Valores</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status/Cliques</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {courses.sort((a, b) => (a.order || 0) - (b.order || 0)).map(course => (
+                      <tr key={course.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
+                        <td className="px-10 py-8 text-center text-lg font-black text-zinc-400">{course.order}</td>
+                        <td className="px-10 py-8">
+                          <div className="flex flex-col">
+                            <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight line-clamp-2">{course.title}</span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            {course.promotional_price ? (
+                              <>
+                                <span className="text-xs text-zinc-400 line-through font-bold">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                                <span className="text-lg font-black text-emerald-500">R$ {course.promotional_price.toFixed(2).replace('.', ',')}</span>
+                              </>
+                            ) : (
+                              <span className="text-lg font-black text-blue-600">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${course.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                              {course.active ? 'Ativo' : 'Inativo'}
+                            </span>
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">
+                              {course.clicks || 0} CLIQUES
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-right">
+                          <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                            <button 
+                              onClick={() => { setEditingCourse(course); setIsCourseModalOpen(true); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                            >
+                              <Edit2 className="w-4 h-4" /> Alterar
+                            </button>
+                            <button 
+                              onClick={() => { setConfirmDelete({ id: course.id, type: 'course', title: course.title }); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                            >
+                              <Trash2 className="w-4 h-4" /> Excluir
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {courses.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUM CURSO CADASTRADO</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>
@@ -691,6 +787,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
 
       <Modal isOpen={isAnnouncementModalOpen} onClose={resetModals} title={editingAnnouncement ? 'Alterar Mensagem' : 'Nova Mensagem'} maxWidth="max-w-xl">
         <AnnouncementForm plans={plans} announcement={editingAnnouncement} onSave={(data) => { handlers.saveAnnouncement(data); onSaveComplete('Mensagem programada com sucesso!'); }} />
+      </Modal>
+
+      <Modal isOpen={isCourseModalOpen} onClose={resetModals} title={editingCourse ? 'Alterar Curso' : 'Novo Curso'} maxWidth="max-w-3xl">
+        <CourseForm course={editingCourse} nextOrder={Math.max(0, ...courses.map(c => c.order || 0)) + 1} onSave={(data) => { handlers.saveCourse(data); onSaveComplete('Curso salvo com sucesso!'); }} />
       </Modal>
 
       <AnimatePresence>
@@ -1220,6 +1320,78 @@ const AnnouncementForm: React.FC<{ plans: Plan[]; announcement: Announcement | n
       >
         {announcement?.id ? 'ATUALIZAR MENSAGEM' : 'PROGRAMAR MENSAGEM'}
       </button>
+    </div>
+  );
+};
+
+const CourseForm: React.FC<{ course: Course | null; nextOrder: number; onSave: (c: Course) => void }> = ({ course, nextOrder, onSave }) => {
+  const [title, setTitle] = useState(course?.title || '');
+  const [desc, setDesc] = useState(course?.description || '');
+  const [price, setPrice] = useState(course?.price || 0);
+  const [promPrice, setPromPrice] = useState(course?.promotional_price || undefined);
+  const [url, setUrl] = useState(course?.payment_url || '');
+  const [active, setActive] = useState(course?.active ?? true);
+  const [order, setOrder] = useState(course?.order || nextOrder);
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-3 space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Título do Curso</label>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Excel Sem Segredo" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Ordem</label>
+          <input type="number" value={order} onChange={e => setOrder(parseInt(e.target.value))} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Descrição</label>
+        <textarea rows={3} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Descrição do curso para os alunos..." className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all resize-none text-sm" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Valor (R$)</label>
+          <div className="relative">
+            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-400">R$</span>
+            <input type="number" step="0.01" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} className="w-full pl-12 pr-5 py-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all text-sm" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-amber-500">Valor Promocional (Opcional R$)</label>
+          <div className="relative">
+            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-sm font-black text-amber-500/50">R$</span>
+            <input type="number" step="0.01" value={promPrice === undefined ? '' : promPrice} onChange={e => setPromPrice(e.target.value ? parseFloat(e.target.value) : undefined)} className="w-full pl-12 pr-5 py-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-amber-500 outline-none transition-all text-sm" placeholder="Deixe vazio para não usar" />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Link da Oferta no Site</label>
+        <div className="relative">
+          <Link className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+          <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." className="w-full pl-14 pr-5 py-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 py-6 px-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+        <button 
+          onClick={() => setActive(!active)} 
+          className={`w-14 h-8 rounded-full transition-all relative ${active ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+        >
+          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${active ? 'left-7' : 'left-1'}`} />
+        </button>
+        <div className="flex flex-col">
+          <span className="font-black text-[11px] uppercase tracking-widest text-zinc-800 dark:text-white">
+            {active ? 'CURSO ATIVO NA LOJA DO ALUNO' : 'CURSO OCULTO'}
+          </span>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Somente cursos ativos aparecem para os alunos</span>
+        </div>
+      </div>
+
+      <button onClick={() => onSave({ id: course?.id || '', title, description: desc, price, promotional_price: promPrice, payment_url: url, active, order, clicks: course?.clicks || 0 })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR CURSO</button>
     </div>
   );
 };
