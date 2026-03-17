@@ -185,7 +185,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-12 lg:p-16 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight line-clamp-1 uppercase">
@@ -326,10 +326,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Aluno</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Plano</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Aluno</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-[160px]">Plano</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -343,20 +343,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                       })
                       .map(user => (
                         <tr key={user.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-default group">
-                          <td className="px-10 py-8">
+                          <td className="px-4 md:px-6 py-8">
                             <div className="flex items-center gap-4">
                               <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-2xl flex items-center justify-center font-black text-2xl border-2 border-blue-100 dark:border-blue-800/50 shadow-sm shrink-0">
                                 {user.full_name[0]}
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-extrabold text-zinc-900 dark:text-white text-xl leading-none mb-1">{user.full_name}</span>
+                                <span className="font-extrabold text-zinc-900 dark:text-white text-xl leading-none mb-1 line-clamp-1">{user.full_name}</span>
                                 <span className="text-sm text-zinc-400 font-medium flex items-center gap-2">
                                   <Mail className="w-3.5 h-3.5" /> {user.email || 'Sem e-mail'}
                                 </span>
                               </div>
                             </div>
                           </td>
-                          <td className="px-10 py-8">
+                          <td className="px-4 md:px-6 py-8">
                             <div className="flex justify-center">
                               <span className={`inline-flex items-center gap-2 px-5 py-2 rounded-[14px] text-[10px] font-black uppercase tracking-wider ${user.active ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm shadow-emerald-500/10' : 'bg-rose-50 text-rose-600 border border-rose-100 shadow-sm shadow-rose-500/10'}`}>
                                 <div className={`w-2 h-2 rounded-full ${user.active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
@@ -364,7 +364,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                               </span>
                             </div>
                           </td>
-                          <td className="px-10 py-8">
+                          <td className="px-4 md:px-6 py-8">
                             <div className="flex flex-col gap-1">
                               <span className="flex items-center gap-2 text-sm font-black text-zinc-700 dark:text-zinc-200">
                                 <Shield className="w-4 h-4 text-blue-500" />
@@ -376,8 +376,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                               </span>
                             </div>
                           </td>
-                          <td className="px-10 py-8 text-right">
-                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                          <td className="px-4 md:px-6 py-8 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
                               <button 
                                 onClick={() => { setEditingUser(user); setIsUserModalOpen(true); }}
                                 className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
@@ -425,13 +425,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[800px]">
                   <thead>
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Módulo</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Lição / Conteúdo</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Nível</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-[110px]">Módulo</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Lição / Conteúdo</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-[130px]">Nível</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[180px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -442,60 +442,60 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                         const moduleLessons = lessons.filter(l => l.module_id === module.id).sort((a, b) => (a.order || 0) - (b.order || 0));
                         return (
                           <React.Fragment key={module.id}>
-                            <tr className="bg-blue-50/30 dark:bg-blue-900/10">
-                              <td className="px-10 py-6 border-l-4 border-blue-500" colSpan={3}>
-                                <div className="flex items-center gap-4">
-                                  <span className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center font-black text-sm">{module.order}</span>
-                                  <div>
-                                    <span className="font-black text-zinc-900 dark:text-white uppercase tracking-tight text-lg">{module.title}</span>
-                                    <p className="text-xs text-zinc-400 font-bold">{module.description}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-10 py-6 text-right">
-                                <div className="flex justify-end gap-3">
-                                  <button onClick={() => { setEditingLesson({ module_id: module.id } as any); setIsLessonModalOpen(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all font-black text-[10px] uppercase tracking-widest">
-                                    <Plus className="w-4 h-4" /> Nova Aula
-                                  </button>
-                                  <button onClick={() => { setEditingModule(module); setIsModuleModalOpen(true); }} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white">
-                                    <Edit2 className="w-3.5 h-3.5" /> Alterar
-                                  </button>
-                                  <button onClick={() => { setConfirmDelete({ id: module.id, type: 'module', title: module.title }); }} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white">
-                                    <Trash2 className="w-3.5 h-3.5" /> Excluir
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                            {moduleLessons.length > 0 ? moduleLessons.map(lesson => (
-                              <tr key={lesson.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
-                                <td className="px-10 py-5 text-sm font-bold text-zinc-400 pl-16">Lição {lesson.order}</td>
-                                <td className="px-10 py-5">
-                                  <div className="flex flex-col">
-                                    <span className="font-black text-zinc-700 dark:text-zinc-200">{lesson.title}</span>
-                                    <span className="text-xs font-mono text-zinc-400 truncate max-w-[400px] leading-tight mt-1">{lesson.content.substring(0, 100)}...</span>
-                                  </div>
-                                </td>
-                                <td className="px-10 py-5">
-                                  <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
-                                    lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                                    lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
-                                    'bg-rose-50 border-rose-200 text-rose-600'
-                                  }`}>
-                                    {lesson.difficulty === 'easy' ? 'FÁCIL' : lesson.difficulty === 'medium' ? 'MÉDIO' : 'AVANÇADO'}
-                                  </span>
-                                </td>
-                                <td className="px-10 py-5 text-right opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-                                  <div className="flex justify-end gap-2">
-                                    <button onClick={() => { setEditingLesson(lesson); setIsLessonModalOpen(true); }} className="w-9 h-9 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg transition-all border border-zinc-200/50 dark:border-zinc-700 shadow-sm" title="Alterar"><Edit2 className="w-3.5 h-3.5" /></button>
-                                    <button onClick={() => { setConfirmDelete({ id: lesson.id, type: 'lesson', title: lesson.title }); }} className="w-9 h-9 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-rose-500 rounded-lg transition-all border border-zinc-200/50 dark:border-zinc-700 shadow-sm" title="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
-                                  </div>
-                                </td>
-                              </tr>
-                            )) : (
-                              <tr>
-                                <td colSpan={4} className="px-10 py-4 text-center text-xs font-bold text-zinc-300 italic uppercase tracking-widest">Nenhuma lição cadastrada neste módulo</td>
-                              </tr>
-                            )}
+                             <tr className="bg-blue-50/30 dark:bg-blue-900/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                               <td className="px-4 md:px-6 py-6 border-l-4 border-blue-500" colSpan={3}>
+                                 <div className="flex items-center gap-4">
+                                   <span className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center font-black text-sm shrink-0">{module.order}</span>
+                                   <div className="min-w-0">
+                                     <span className="font-black text-zinc-900 dark:text-white uppercase tracking-tight text-lg block truncate">{module.title}</span>
+                                     <p className="text-xs text-zinc-400 font-bold truncate">{module.description}</p>
+                                   </div>
+                                 </div>
+                               </td>
+                               <td className="px-4 md:px-6 py-6 text-right">
+                                 <div className="flex justify-end gap-2 md:gap-3 flex-wrap md:flex-nowrap">
+                                   <button onClick={() => { setEditingLesson({ module_id: module.id } as any); setIsLessonModalOpen(true); }} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all font-black text-[10px] uppercase tracking-widest whitespace-nowrap">
+                                     <Plus className="w-4 h-4" /> Nova Aula
+                                   </button>
+                                   <button onClick={() => { setEditingModule(module); setIsModuleModalOpen(true); }} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white whitespace-nowrap">
+                                     <Edit2 className="w-3.5 h-3.5" /> Alterar
+                                   </button>
+                                   <button onClick={() => { setConfirmDelete({ id: module.id, type: 'module', title: module.title }); }} className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white whitespace-nowrap">
+                                     <Trash2 className="w-3.5 h-3.5" /> Excluir
+                                   </button>
+                                 </div>
+                               </td>
+                             </tr>
+                             {moduleLessons.length > 0 ? moduleLessons.map(lesson => (
+                               <tr key={lesson.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
+                                 <td className="px-4 md:px-6 py-5 text-sm font-bold text-zinc-400 pl-16">Lição {lesson.order}</td>
+                                 <td className="px-4 md:px-6 py-5">
+                                   <div className="flex flex-col min-w-0">
+                                     <span className="font-black text-zinc-700 dark:text-zinc-200 truncate">{lesson.title}</span>
+                                     <span className="text-xs font-mono text-zinc-400 truncate max-w-[300px] leading-tight mt-1">{lesson.content.substring(0, 100)}...</span>
+                                   </div>
+                                 </td>
+                                 <td className="px-4 md:px-6 py-5">
+                                   <span className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                                     lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                     lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                                     'bg-rose-50 border-rose-200 text-rose-600'
+                                   }`}>
+                                     {lesson.difficulty === 'easy' ? 'FÁCIL' : lesson.difficulty === 'medium' ? 'MÉDIO' : 'AVANÇADO'}
+                                   </span>
+                                 </td>
+                                 <td className="px-4 md:px-6 py-5 text-right md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                                   <div className="flex justify-end gap-2">
+                                     <button onClick={() => { setEditingLesson(lesson); setIsLessonModalOpen(true); }} className="w-9 h-9 flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 rounded-lg transition-all border border-zinc-200/50 dark:border-zinc-700 shadow-sm" title="Alterar"><Edit2 className="w-3.5 h-3.5" /></button>
+                                     <button onClick={() => { setConfirmDelete({ id: lesson.id, type: 'lesson', title: lesson.title }); }} className="w-9 h-9 flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-rose-500 rounded-lg transition-all border border-zinc-200/50 dark:border-zinc-700 shadow-sm" title="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+                                   </div>
+                                 </td>
+                               </tr>
+                             )) : (
+                               <tr>
+                                 <td colSpan={4} className="px-4 md:px-6 py-4 text-center text-xs font-bold text-zinc-300 italic uppercase tracking-widest">Nenhuma lição cadastrada neste módulo</td>
+                               </tr>
+                             )}
                           </React.Fragment>
                         );
                       })}
@@ -524,19 +524,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Plano</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Validade / Valor</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Módulos Inclusos</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Plano</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[160px]">Validade / Valor</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Módulos Inclusos</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     {plans.map(plan => (
-                      <tr key={plan.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
-                        <td className="px-10 py-8">
+                       <tr key={plan.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                          <td className="px-4 md:px-6 py-8">
                           <div className="flex items-center gap-4">
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl border-2 shadow-sm ${plan.active ? 'bg-blue-50 text-blue-500 border-blue-100' : 'bg-zinc-50 text-zinc-300 border-zinc-100'}`}>
                               <CreditCard className="w-6 h-6" />
@@ -550,7 +550,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                             </div>
                           </div>
                         </td>
-                        <td className="px-10 py-8">
+                          <td className="px-4 md:px-6 py-8">
                           <div className="flex flex-col items-center gap-1">
                             <span className="flex items-center gap-1.5 text-sm font-black text-zinc-700 dark:text-zinc-200">
                               <Clock className="w-4 h-4 text-blue-400" /> {plan.validity_days} DIAS
@@ -563,7 +563,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                             </div>
                           </div>
                         </td>
-                        <td className="px-10 py-8">
+                          <td className="px-4 md:px-6 py-8">
                           <div className="flex flex-wrap gap-2 max-w-[300px]">
                             {plan.accessible_modules.length > 0 ? plan.accessible_modules.map(modId => {
                               const mod = modules.find(m => m.id === modId);
@@ -577,22 +577,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                             )}
                           </div>
                         </td>
-                        <td className="px-10 py-8 text-right">
-                          <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
-                            <button 
-                              onClick={() => { setEditingPlan(plan); setIsPlanModalOpen(true); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-4 h-4" /> Alterar
-                            </button>
-                            <button 
-                              onClick={() => { setConfirmDelete({ id: plan.id, type: 'plan', title: plan.name }); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
-                            >
-                              <Trash2 className="w-4 h-4" /> Excluir
-                            </button>
-                          </div>
-                        </td>
+                         <td className="px-4 md:px-6 py-8 text-right">
+                           <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                             <button 
+                               onClick={() => { setEditingPlan(plan); setIsPlanModalOpen(true); }}
+                               className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                             >
+                               <Edit2 className="w-4 h-4" /> Alterar
+                             </button>
+                             <button 
+                               onClick={() => { setConfirmDelete({ id: plan.id, type: 'plan', title: plan.name }); }}
+                               className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                             >
+                               <Trash2 className="w-4 h-4" /> Excluir
+                             </button>
+                           </div>
+                         </td>
                       </tr>
                     ))}
                   </tbody>
@@ -612,37 +612,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Cliques</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Público</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Cliques</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     {announcements.map(ann => (
-                      <tr key={ann.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
-                        <td className="px-10 py-8">
+                      <tr key={ann.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                        <td className="px-6 md:px-10 py-8">
                           <div className="flex flex-col">
                             <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight">{ann.content}</span>
                             <span className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Criado em {new Date(ann.created_at!).toLocaleDateString()}</span>
                           </div>
                         </td>
-                        <td className="px-10 py-8 text-center">
-                          <div className="flex flex-col items-center">
-                            <span className="text-2xl font-black text-zinc-900 dark:text-white">{ann.clicks || 0}</span>
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cliques</span>
-                          </div>
-                        </td>
-                        <td className="px-10 py-8 text-center">
-                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ann.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
-                            {ann.active ? 'Ativo' : 'Inativo'}
-                          </span>
-                        </td>
-                        <td className="px-10 py-8 text-center min-w-[200px]">
+                         <td className="px-4 md:px-6 py-8 text-center">
+                           <div className="flex flex-col items-center">
+                             <span className="text-2xl font-black text-zinc-900 dark:text-white">{ann.clicks || 0}</span>
+                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cliques</span>
+                           </div>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-center">
+                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ann.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                             {ann.active ? 'Ativo' : 'Inativo'}
+                           </span>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-center min-w-[180px]">
                           <div className="flex flex-wrap justify-center gap-1">
                             {ann.target_plans?.length > 0 ? (
                               ann.target_plans.map(pId => {
@@ -658,8 +658,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                             )}
                           </div>
                         </td>
-                        <td className="px-10 py-8 text-right">
-                          <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                         <td className="px-4 md:px-6 py-8 text-right">
+                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
                             <button 
                               onClick={() => { setEditingAnnouncement(ann); setIsAnnouncementModalOpen(true); }}
                               className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
@@ -693,49 +693,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-16 text-center">Ordem</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Valores</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status/Cliques</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-16 text-center">Ordem</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[130px]">Valores</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[160px]">Status/Cliques</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     {courses.sort((a, b) => (a.order || 0) - (b.order || 0)).map(course => (
-                      <tr key={course.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
-                        <td className="px-10 py-8 text-center text-lg font-black text-zinc-400">{course.order}</td>
-                        <td className="px-10 py-8">
-                          <div className="flex flex-col">
-                            <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight line-clamp-2">{course.title}</span>
-                          </div>
-                        </td>
-                        <td className="px-10 py-8 text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            {course.promotional_price ? (
-                              <>
-                                <span className="text-xs text-zinc-400 line-through font-bold">R$ {course.price.toFixed(2).replace('.', ',')}</span>
-                                <span className="text-lg font-black text-emerald-500">R$ {course.promotional_price.toFixed(2).replace('.', ',')}</span>
-                              </>
-                            ) : (
-                              <span className="text-lg font-black text-blue-600">R$ {course.price.toFixed(2).replace('.', ',')}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-10 py-8 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${course.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
-                              {course.active ? 'Ativo' : 'Inativo'}
-                            </span>
-                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">
-                              {course.clicks || 0} CLIQUES
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-10 py-8 text-right">
-                          <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                      <tr key={course.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                         <td className="px-4 md:px-6 py-8 text-center text-lg font-black text-zinc-400">{course.order}</td>
+                         <td className="px-4 md:px-6 py-8">
+                           <div className="flex flex-col">
+                             <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight line-clamp-2">{course.title}</span>
+                           </div>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-center">
+                           <div className="flex flex-col items-center gap-1">
+                             {course.promotional_price ? (
+                               <>
+                                 <span className="text-xs text-zinc-400 line-through font-bold">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                                 <span className="text-lg font-black text-emerald-500">R$ {course.promotional_price.toFixed(2).replace('.', ',')}</span>
+                               </>
+                             ) : (
+                               <span className="text-lg font-black text-blue-600">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                             )}
+                           </div>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-center">
+                           <div className="flex flex-col items-center gap-2">
+                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${course.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                               {course.active ? 'Ativo' : 'Inativo'}
+                             </span>
+                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">
+                               {course.clicks || 0} CLIQUES
+                             </span>
+                           </div>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-right">
+                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
                             <button 
                               onClick={() => { setEditingCourse(course); setIsCourseModalOpen(true); }}
                               className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"

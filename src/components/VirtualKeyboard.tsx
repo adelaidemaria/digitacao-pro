@@ -70,7 +70,7 @@ export const VirtualKeyboard: React.FC<KeyboardProps> = ({ activeKey, showNumeri
               <motion.div
                 key={idx}
                 className={cn(
-                  "w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-2xl border-b-4 text-base md:text-lg transition-all",
+                  "w-9 h-9 md:w-12 md:h-12 flex items-center justify-center rounded-2xl border-b-4 text-base md:text-lg transition-all",
                   getKeyColor(key)
                 )}
               >

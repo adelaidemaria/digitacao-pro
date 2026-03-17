@@ -346,7 +346,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 }`}
                               >
                                 {/* Lição Column */}
-                                <td className={`pl-4 md:pl-8 pr-4 md:pr-6 py-5 rounded-l-[24px] border-y-2 border-l-2 ${
+                                <td className={`pl-4 md:pl-8 pr-4 md:pr-6 py-5 rounded-l-[24px] border-y-2 border-l-2 transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
                                   status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
                                 }`}>
                                   <div className="flex items-center gap-3 md:gap-5">
@@ -383,7 +385,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 </td>
 
                                 {/* Nível Column (Hidden on mobile/tablet) */}
-                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center ${
+                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
                                   status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
                                 }`}>
                                   <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
@@ -396,7 +400,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 </td>
 
                                 {/* Velocidade Column (Hidden on mobile) */}
-                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center ${
+                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
                                   status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
                                 }`}>
                                   <div className="flex flex-col items-center">
@@ -411,7 +417,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 </td>
 
                                 {/* Precisão Column (Hidden on mobile) */}
-                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center ${
+                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
                                   status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
                                 }`}>
                                   <div className="flex flex-col items-center">
@@ -426,7 +434,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 </td>
 
                                 {/* Status Column */}
-                                <td className={`pr-4 md:pr-12 pl-4 md:pl-6 py-5 rounded-r-[24px] border-y-2 border-r-2 text-right ${
+                                <td className={`pr-4 md:pr-12 pl-4 md:pl-6 py-5 rounded-r-[24px] border-y-2 border-r-2 text-right transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
                                   status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
                                 }`}>
                                   <div className="flex items-center justify-end gap-3 md:gap-5">

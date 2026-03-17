@@ -327,7 +327,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
               </button>
               
 
-              <h2 className="text-xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight uppercase mt-2">Instruções</h2>
+              <h2 className="text-lg font-black text-zinc-900 dark:text-white mb-1 tracking-tight uppercase mt-1">Instruções</h2>
               
               <div className="mb-4 p-2 bg-blue-500/5 dark:bg-blue-500/10 rounded-xl inline-block px-5 border border-blue-100 dark:border-blue-500/20">
                 <p className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-tight">
@@ -359,7 +359,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                     <div className="shrink-0 p-2.5 bg-white dark:bg-zinc-700 rounded-xl shadow-sm"><Trophy className="w-5 h-5 text-emerald-500" /></div>
                     <div>
                       <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Meta para passar</h4>
-                      <p className="text-lg font-black text-zinc-900 dark:text-white flex items-baseline gap-2">
+                      <p className="text-base font-black text-zinc-900 dark:text-white flex items-baseline gap-2">
                         {lesson.min_accuracy && <span><span className="text-emerald-500">{lesson.min_accuracy}%</span> acerto</span>}
                         {lesson.min_accuracy && lesson.min_wpm && <span className="opacity-20 mx-1">|</span>}
                         {lesson.min_wpm && <span><span className="text-blue-500">{lesson.min_wpm}</span> PPM</span>}
@@ -373,9 +373,9 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 <button 
                   autoFocus
                   onClick={() => setShowIntro(false)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-8 focus:ring-blue-500/20 shadow-blue-500/40 outline-none text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl text-base uppercase tracking-widest active:scale-95 group"
+                  className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-8 focus:ring-blue-500/20 shadow-blue-500/40 outline-none text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-3 shadow-xl text-sm uppercase tracking-widest active:scale-95 group"
                 >
-                  VAMOS COMEÇAR! <Play className="w-5 h-5 fill-white group-hover:translate-x-1 transition-transform" />
+                  VAMOS COMEÇAR! <Play className="w-4 h-4 fill-white group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </motion.div>
