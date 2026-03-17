@@ -111,7 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={onOpenCourses}
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
             >
-              <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm">Cursos</span>
+              <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
             </button>
             <button 
               onClick={() => setIsAchievementsOpen(true)}
@@ -124,6 +124,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {achievements.filter(a => a.completed).length}
                 </span>
               )}
+            </button>
+            <button 
+              onClick={onOpenSettings}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group text-sm"
+            >
+              <SettingsIcon className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> 
+              <span className="text-sm">Configurações</span>
             </button>
           </nav>
 
@@ -183,24 +190,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             
             <div className="pt-2 space-y-3">
-              {/* User Profile Card */}
-              <div 
-                onClick={onOpenProfile}
-                className="group relative p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
-                    <User className="w-5 h-5 text-zinc-400" />
-                  </div>
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <span className="text-xs font-bold text-zinc-900 dark:text-white truncate">{user.full_name}</span>
-                    <span className="text-[9px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
-                      <Activity className="w-2.5 h-2.5" /> Ver Perfil
-                    </span>
-                  </div>
-                  <SettingsIcon className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-                </div>
-              </div>
               <button 
                 onClick={onLogout}
                 className="w-full flex items-center justify-center p-3 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-xl text-rose-500 font-black transition-all gap-2 text-[10px] uppercase tracking-widest border border-rose-100/50 dark:border-rose-500/20"
@@ -509,7 +498,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[90vh]"
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[85vh] md:max-h-[90vh]"
             >
               <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
                 <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Minhas Conquistas</h2>
@@ -569,7 +558,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[90vh]"
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[85vh] md:max-h-[90vh]"
             >
               <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-800 dark:bg-zinc-800 text-white shrink-0">
                 <div>

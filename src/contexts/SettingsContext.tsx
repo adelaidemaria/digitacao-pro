@@ -7,6 +7,7 @@ interface Settings {
   soundOnErrorOnly: boolean;
   showKeyboard: boolean;
   showNumeric: boolean;
+  showInstructions: boolean;
 }
 
 interface SettingsContextType {
@@ -19,14 +20,23 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem('typing-settings');
-    return saved ? JSON.parse(saved) : {
+    const defaults = {
       theme: 'light',
       fontSize: 24,
       soundEnabled: true,
       soundOnErrorOnly: false,
       showKeyboard: true,
       showNumeric: false,
+      showInstructions: true,
     };
+    if (saved) {
+      try {
+        return { ...defaults, ...JSON.parse(saved) };
+      } catch (e) {
+        return defaults;
+      }
+    }
+    return defaults;
   });
 
   useEffect(() => {

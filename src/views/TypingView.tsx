@@ -4,7 +4,7 @@ import { useTypingEngine } from '../hooks/useTypingEngine';
 import { useSettings } from '../contexts/SettingsContext';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { useSound } from '../hooks/useSound';
-import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play, Video, ExternalLink, X } from 'lucide-react';
+import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play, Video, ExternalLink, X, Info, Target, AlertCircle, Settings } from 'lucide-react';
 import { Lesson } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -15,14 +15,16 @@ interface TypingViewProps {
   onBack: () => void;
   hasNextLesson?: boolean;
   onOpenCourses: () => void;
+  onOpenSettings: () => void;
 }
 
-export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses }) => {
+export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses, onOpenSettings }) => {
   const { settings } = useSettings();
   const [isStarted, setIsStarted] = useState(false);
   const { input, stats, reset } = useTypingEngine(lesson.content, settings, !isStarted);
   const { playSuccess, playError } = useSound();
   const [showResults, setShowResults] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
   
   const [prevInputLength, setPrevInputLength] = useState(0);
   const [prevErrors, setPrevErrors] = useState(0);
@@ -50,16 +52,20 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
     if (stats.endTime && !showResults) {
       setShowResults(true);
       // Auto-save results immediately without navigating
-      onComplete(stats, 'none');
+      const passedAccuracy = lesson.min_accuracy ? stats.accuracy >= lesson.min_accuracy : true;
+      const passedWpm = lesson.min_wpm ? stats.wpm >= lesson.min_wpm : true;
       
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#3b82f6', '#f59e0b']
-      });
+      if (passedAccuracy && passedWpm) {
+        onComplete(stats, 'none');
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#3b82f6', '#f59e0b']
+        });
+      }
     }
-  }, [stats.endTime, showResults, stats, onComplete]);
+  }, [stats.endTime, showResults, stats, onComplete, lesson.min_accuracy, lesson.min_wpm]);
 
   const handleReset = () => {
     setPrevInputLength(0);
@@ -70,7 +76,6 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
   };
 
   const handleBack = () => {
-    // If finished, just go back. If not, cancel (delete progress)
     if (showResults) {
       onComplete(stats, 'dashboard');
     } else {
@@ -80,9 +85,18 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
 
   useEffect(() => {
     handleReset();
-  }, [lesson.id]);
+    if (settings.showInstructions && (lesson.objective?.trim() || lesson.instruction?.trim())) {
+      setShowIntro(true);
+    } else {
+      setShowIntro(false);
+    }
+  }, [lesson.id, lesson.objective, lesson.instruction, settings.showInstructions]);
 
   const targetChar = lesson.content[input.length] || '';
+  
+  const passedAccuracy = lesson.min_accuracy ? stats.accuracy >= lesson.min_accuracy : true;
+  const passedWpm = lesson.min_wpm ? stats.wpm >= lesson.min_wpm : true;
+  const hasPassed = passedAccuracy && passedWpm;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1400px] mx-auto p-4 md:p-8 min-h-[calc(100vh-80px)]">
@@ -123,19 +137,8 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 <p className="text-[10px] font-bold text-zinc-400 italic">Módulo finalizado!</p>
               )}
             </div>
-
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-              <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Suas Conquistas</h4>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className={`aspect-square rounded-lg flex items-center justify-center border-2 ${i <= 2 ? 'bg-amber-50 border-amber-200 text-amber-500' : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-100 dark:border-zinc-800 text-zinc-300'}`}>
-                    <Award className="w-5 h-5" />
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
-          
+
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
             <button 
               onClick={onOpenCourses}
@@ -146,12 +149,20 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
             </button>
           </div>
 
-          <div className="mt-auto pt-2">
+          <div className="mt-auto pt-2 space-y-2">
             <button 
               onClick={handleReset}
               className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold text-base rounded-xl transition-all flex items-center justify-center gap-3 border-2 border-emerald-200/50 dark:border-emerald-500/30"
             >
               <RotateCcw className="w-4 h-4" /> REINICIAR LIÇÃO
+            </button>
+
+            <button 
+              onClick={onOpenSettings}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800/50 dark:hover:bg-zinc-700/50 text-zinc-500 dark:text-zinc-400 font-black text-sm rounded-xl transition-all border-2 border-zinc-200/50 dark:border-zinc-800/30 group"
+            >
+              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+              <span>AJUSTES</span>
             </button>
           </div>
         </div>
@@ -214,7 +225,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
         )}
       </main>
 
-      {/* Results Modal - Compact Version */}
+      {/* Modals */}
       <AnimatePresence>
         {showResults && (
           <motion.div 
@@ -228,46 +239,144 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-blue-500 to-emerald-400" />
               
               <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <Trophy className="w-10 h-10 text-emerald-500" />
+                {hasPassed ? (
+                  <Trophy className="w-10 h-10 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-10 h-10 text-amber-500" />
+                )}
               </div>
 
-              <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight">Parabéns! 🎊</h2>
-              <p className="text-zinc-500 mb-8 font-bold">Excelente desempenho!</p>
+              {hasPassed ? (
+                <>
+                  <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight">Parabéns! 🎊</h2>
+                  <p className="text-zinc-500 mb-8 font-bold">Excelente desempenho!</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight">Quase lá! 💪</h2>
+                  <p className="text-zinc-500 mb-8 font-bold">Você não atingiu a meta da lição. Tente novamente.</p>
+                </>
+              )}
               
               <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedAccuracy && lesson.min_accuracy ? 'ring-2 ring-rose-500/50' : ''}`}>
                   <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Precisão</span>
-                  <span className="text-3xl font-black text-emerald-500">{stats.accuracy}%</span>
+                  <span className={`text-3xl font-black ${!passedAccuracy && lesson.min_accuracy ? 'text-rose-500' : 'text-emerald-500'}`}>{stats.accuracy}%</span>
+                  {lesson.min_accuracy && <span className="block text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_accuracy}%</span>}
                 </div>
-                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedWpm && lesson.min_wpm ? 'ring-2 ring-rose-500/50' : ''}`}>
                   <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Velocidade</span>
-                  <span className="text-3xl font-black text-blue-500">{stats.wpm} <span className="text-sm">PPM</span></span>
+                  <span className={`text-3xl font-black ${!passedWpm && lesson.min_wpm ? 'text-rose-500' : 'text-blue-500'}`}>{stats.wpm} <span className="text-sm">PPM</span></span>
+                  {lesson.min_wpm && <span className="block text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_wpm} PPM</span>}
                 </div>
               </div>
 
               <div className="space-y-3">
-                <button 
-                  autoFocus
-                  onClick={() => onComplete(stats, 'next')}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-500/50 outline-none text-white font-black py-5 rounded-[20px] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 text-xl"
-                >
-                  PRÓXIMA AULA <ArrowRight className="w-6 h-6" />
-                </button>
+                {hasPassed && (
+                  <button 
+                    autoFocus
+                    onClick={() => onComplete(stats, 'next')}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-500/50 outline-none text-white font-black py-5 rounded-[20px] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 text-xl"
+                  >
+                    PRÓXIMA AULA <ArrowRight className="w-6 h-6" />
+                  </button>
+                )}
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid ${hasPassed ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                   <button 
                     onClick={handleReset}
-                    className="py-4 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-extrabold rounded-2xl transition-all text-sm flex items-center justify-center gap-2"
+                    className={`py-4 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-extrabold rounded-2xl transition-all text-sm flex items-center justify-center gap-2 ${!hasPassed ? 'py-5 text-lg w-full bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 text-amber-600' : ''}`}
                   >
                     <RotateCcw className="w-4 h-4" /> REFAZER
                   </button>
-                  <button 
-                    onClick={handleBack}
-                    className="py-4 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold rounded-2xl transition-all text-sm"
-                  >
-                    SAIR
-                  </button>
+                  {hasPassed && (
+                    <button 
+                      onClick={handleBack}
+                      className="py-4 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold rounded-2xl transition-all text-sm"
+                    >
+                      SAIR
+                    </button>
+                  )}
                 </div>
+                {!hasPassed && (
+                  <div className="pt-2">
+                    <button onClick={handleBack} className="text-[10px] text-zinc-400 hover:text-zinc-600 tracking-widest font-black uppercase">Voltar ao Início</button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showIntro && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[40px] shadow-2xl max-w-lg w-full text-center border border-white/10 relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
+            >
+              <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-400" />
+              
+              <button 
+                onClick={() => setShowIntro(false)}
+                className="absolute top-6 right-6 p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-zinc-600 z-10"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+
+              <h2 className="text-xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight uppercase mt-2">Instruções</h2>
+              
+              <div className="mb-4 p-2 bg-blue-500/5 dark:bg-blue-500/10 rounded-xl inline-block px-5 border border-blue-100 dark:border-blue-500/20">
+                <p className="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-tight">
+                  Lição {currentIndex + 1}: <span className="text-zinc-900 dark:text-white font-bold">{lesson.title}</span>
+                </p>
+              </div>
+              
+              <div className="space-y-4 mb-6 text-left">
+                {lesson.objective && (
+                  <div className="p-4 bg-amber-50 dark:bg-amber-500/5 rounded-[24px] border border-amber-100/50 dark:border-amber-500/10 flex gap-4 shadow-sm group hover:border-amber-200 transition-colors">
+                    <div className="shrink-0 p-2.5 bg-white dark:bg-amber-500/20 rounded-xl shadow-sm transform group-hover:rotate-12 transition-transform"><Target className="w-5 h-5 text-amber-500" /></div>
+                    <div>
+                      <h4 className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 mb-0.5">Objetivo da Aula</h4>
+                      <p className="text-sm font-bold text-amber-900 dark:text-amber-300 leading-snug">{lesson.objective}</p>
+                    </div>
+                  </div>
+                )}
+                {lesson.instruction && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-500/5 rounded-[24px] border border-blue-100/50 dark:border-blue-500/10 flex gap-4 shadow-sm group hover:border-blue-200 transition-colors">
+                    <div className="shrink-0 p-2.5 bg-white dark:bg-blue-500/20 rounded-xl shadow-sm transform group-hover:-rotate-12 transition-transform"><Info className="w-5 h-5 text-blue-500" /></div>
+                    <div>
+                      <h4 className="text-[9px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-500 mb-0.5">Como Fazer</h4>
+                      <p className="text-sm font-bold text-blue-800 dark:text-blue-300 leading-snug">{lesson.instruction}</p>
+                    </div>
+                  </div>
+                )}
+                {(lesson.min_accuracy || lesson.min_wpm) && (
+                  <div className="p-4 bg-zinc-50 dark:bg-zinc-800/80 rounded-[24px] border border-zinc-200 dark:border-zinc-700 flex items-center gap-4 shadow-sm">
+                    <div className="shrink-0 p-2.5 bg-white dark:bg-zinc-700 rounded-xl shadow-sm"><Trophy className="w-5 h-5 text-emerald-500" /></div>
+                    <div>
+                      <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Meta para passar</h4>
+                      <p className="text-lg font-black text-zinc-900 dark:text-white flex items-baseline gap-2">
+                        {lesson.min_accuracy && <span><span className="text-emerald-500">{lesson.min_accuracy}%</span> acerto</span>}
+                        {lesson.min_accuracy && lesson.min_wpm && <span className="opacity-20 mx-1">|</span>}
+                        {lesson.min_wpm && <span><span className="text-blue-500">{lesson.min_wpm}</span> PPM</span>}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <button 
+                  autoFocus
+                  onClick={() => setShowIntro(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 focus:ring-8 focus:ring-blue-500/20 shadow-blue-500/40 outline-none text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl text-base uppercase tracking-widest active:scale-95 group"
+                >
+                  VAMOS COMEÇAR! <Play className="w-5 h-5 fill-white group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
             </motion.div>
           </motion.div>

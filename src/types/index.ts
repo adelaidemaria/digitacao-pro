@@ -26,6 +26,10 @@ export interface Lesson {
   content: string;
   difficulty: 'easy' | 'medium' | 'hard';
   order: number;
+  objective?: string;
+  instruction?: string;
+  min_accuracy?: number;
+  min_wpm?: number;
 }
 
 export interface Plan {

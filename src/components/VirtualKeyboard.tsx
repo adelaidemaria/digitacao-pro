@@ -65,12 +65,12 @@ export const VirtualKeyboard: React.FC<KeyboardProps> = ({ activeKey, showNumeri
         </div>
 
         {showNumeric && (
-          <div className="grid grid-cols-3 gap-2 md:gap-3 border-l-2 border-zinc-200 dark:border-zinc-800 pl-4 md:pl-8">
+          <div className="grid grid-cols-3 gap-3 md:gap-4 border-l-2 border-zinc-200 dark:border-zinc-800 pl-4 md:pl-8">
             {NUMERIC.map((key, idx) => (
               <motion.div
                 key={idx}
                 className={cn(
-                  "w-12 h-12 md:w-16 md:h-16 flex items-center justify-center rounded-2xl border-b-4 text-xl transition-all",
+                  "w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-2xl border-b-4 text-base md:text-lg transition-all",
                   getKeyColor(key)
                 )}
               >

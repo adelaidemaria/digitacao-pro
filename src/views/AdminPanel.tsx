@@ -154,33 +154,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               <Video className="w-5 h-5 flex-shrink-0" /> Cursos
             </button>
           </nav>
-        </div>
 
-        <div className="mt-auto p-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
-          {/* Admin Profile Card */}
-          <div 
-            onClick={() => setIsAdminProfileOpen(true)}
-            className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-xl flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
-                <User className="w-5 h-5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-              </div>
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <span className="text-sm font-black text-zinc-900 dark:text-white truncate">{user.full_name}</span>
-                <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
-                  Meu Perfil
-                </span>
+          <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4 mt-6">
+            {/* Admin Profile Card */}
+            <div 
+              onClick={() => setIsAdminProfileOpen(true)}
+              className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-xl flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
+                  <User className="w-5 h-5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <span className="text-sm font-black text-zinc-900 dark:text-white truncate">{user.full_name}</span>
+                  <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
+                    Meu Perfil
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <button 
-            onClick={onLogout}
-            className="w-full flex items-center justify-center gap-3 p-5 bg-rose-500 hover:bg-rose-600 rounded-[20px] text-white font-black shadow-xl shadow-rose-500/20 transition-all hover:scale-[1.02] uppercase tracking-widest text-xs"
-          >
-            <LogOut className="w-4 h-4" /> Sair do Painel
-          </button>
+            <button 
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-3 p-5 bg-rose-500 hover:bg-rose-600 rounded-[20px] text-white font-black shadow-xl shadow-rose-500/20 transition-all hover:scale-[1.02] uppercase tracking-widest text-xs"
+            >
+              <LogOut className="w-4 h-4" /> Sair do Painel
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -328,7 +328,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                     <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Aluno</th>
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Plano / Cadastro</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Plano</th>
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                   </thead>
@@ -618,7 +618,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Cliques</th>
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Público-Alvo</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Público</th>
                       <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                   </thead>
@@ -997,6 +997,10 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
   const [content, setContent] = useState(lesson?.content || '');
   const [diff, setDiff] = useState(lesson?.difficulty || 'easy');
   const [order, setOrder] = useState(lesson?.order || nextOrder);
+  const [objective, setObjective] = useState(lesson?.objective || '');
+  const [instruction, setInstruction] = useState(lesson?.instruction || '');
+  const [minAcc, setMinAcc] = useState<number | ''>(lesson?.min_accuracy ?? '');
+  const [minWpm, setMinWpm] = useState<number | ''>(lesson?.min_wpm ?? '');
 
   return (
     <div className="space-y-6">
@@ -1014,6 +1018,27 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
         <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Sequência de Digitação (Exercício)</label>
         <textarea rows={4} value={content} onChange={e => setContent(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold font-mono outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans" placeholder="Ex: fj fj fjjf..." />
       </div>
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">🎯 Objetivo da Aula (Opcional)</label>
+        <textarea rows={2} value={objective} onChange={e => setObjective(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans text-sm" placeholder="Ex: Fazer o aluno entender onde ficam as teclas principais..." />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">📝 Instrução na Tela (Opcional)</label>
+        <textarea rows={2} value={instruction} onChange={e => setInstruction(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans text-sm" placeholder="Ex: Coloque o dedo indicador esquerdo na tecla F..." />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Regra: Mínimo de Acerto % (Opcional)</label>
+          <input type="number" value={minAcc} onChange={e => setMinAcc(e.target.value ? parseInt(e.target.value) : '')} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-amber-500 transition-all text-sm" placeholder="Ex: 80" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Regra: Mínimo de PPM (Opcional)</label>
+          <input type="number" value={minWpm} onChange={e => setMinWpm(e.target.value ? parseInt(e.target.value) : '')} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-amber-500 transition-all text-sm" placeholder="Ex: 20" />
+        </div>
+      </div>
+
       <div className="flex gap-4">
         {['easy', 'medium', 'hard'].map(d => (
           <button key={d} onClick={() => setDiff(d as any)} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border-2 transition-all ${diff === d ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-800 text-zinc-400'}`}>
@@ -1021,7 +1046,7 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
           </button>
         ))}
       </div>
-      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
+      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order, objective, instruction, min_accuracy: minAcc === '' ? undefined : minAcc, min_wpm: minWpm === '' ? undefined : minWpm })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
     </div>
   );
 };

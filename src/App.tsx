@@ -5,139 +5,30 @@ import { Dashboard } from './views/Dashboard';
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
 import { Module, Lesson, Profile, Plan, Course } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink } from 'lucide-react';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
-const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { settings, updateSettings } = useSettings();
+interface ProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: Profile;
+  onUpdate: (newName: string) => void;
+  initialTab?: 'profile' | 'settings';
+}
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
-        >
-          <motion.div 
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
-          >
-            <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
-              <h2 className="text-2xl font-black text-zinc-800 dark:text-white">Configurações</h2>
-              <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
-                <X className="w-6 h-6 text-zinc-400" />
-              </button>
-            </div>
-            
-            <div className="p-8 space-y-8">
-              {/* Theme */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500"><Monitor className="w-5 h-5" /></div>
-                  <div>
-                    <span className="block font-bold text-zinc-800 dark:text-white">Tema</span>
-                    <span className="text-xs text-zinc-400">Escolha o visual do app</span>
-                  </div>
-                </div>
-                <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
-                  <button 
-                    onClick={() => updateSettings({ theme: 'light' })}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${settings.theme === 'light' ? 'bg-white text-blue-500 shadow-sm' : 'text-zinc-500'}`}
-                  >
-                    Claro
-                  </button>
-                  <button 
-                    onClick={() => updateSettings({ theme: 'dark' })}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${settings.theme === 'dark' ? 'bg-zinc-700 text-blue-400 shadow-sm' : 'text-zinc-500'}`}
-                  >
-                    Escuro
-                  </button>
-                </div>
-              </div>
-
-              {/* Font Size */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500"><Type className="w-5 h-5" /></div>
-                  <div>
-                    <span className="block font-bold text-zinc-800 dark:text-white">Tamanho da Fonte</span>
-                    <span className="text-xs text-zinc-400">Ajuste para melhor leitura</span>
-                  </div>
-                </div>
-                <input 
-                  type="range" min="16" max="48" step="4"
-                  value={settings.fontSize}
-                  onChange={(e) => updateSettings({ fontSize: parseInt(e.target.value) })}
-                  className="w-full h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full appearance-none cursor-pointer accent-blue-500"
-                />
-              </div>
-
-              {/* Sound */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500"><Volume2 className="w-5 h-5" /></div>
-                    <div>
-                      <span className="block font-bold text-zinc-800 dark:text-white">Sons</span>
-                      <span className="text-xs text-zinc-400">Feedback sonoro ao digitar</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
-                    className={`w-12 h-6 rounded-full transition-all relative ${settings.soundEnabled ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.soundEnabled ? 'left-7' : 'left-1'}`} />
-                  </button>
-                </div>
-                {settings.soundEnabled && (
-                  <div className="flex items-center gap-2 ml-14">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.soundOnErrorOnly}
-                      onChange={(e) => updateSettings({ soundOnErrorOnly: e.target.checked })}
-                      className="w-4 h-4 accent-blue-500"
-                    />
-                    <span className="text-xs text-zinc-500">Tocar som apenas ao errar</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Keyboard */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-2xl text-zinc-500"><Keyboard className="w-5 h-5" /></div>
-                  <div>
-                    <span className="block font-bold text-zinc-800 dark:text-white">Teclado Numérico</span>
-                    <span className="text-xs text-zinc-400">Mostrar teclado lateral</span>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => updateSettings({ showNumeric: !settings.showNumeric })}
-                  className={`w-12 h-6 rounded-full transition-all relative ${settings.showNumeric ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.showNumeric ? 'left-7' : 'left-1'}`} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const ProfileModal: React.FC<{ 
-  isOpen: boolean; 
-  onClose: () => void; 
-  user: Profile; 
-  onUpdate: (newName: string) => void 
-}> = ({ isOpen, onClose, user, onUpdate }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUpdate, initialTab = 'profile' }) => {
   const [name, setName] = useState(user.full_name);
+  const { settings, updateSettings } = useSettings();
+  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>(initialTab);
+
+  useEffect(() => {
+    setName(user.full_name);
+  }, [user.full_name]);
+
+  useEffect(() => {
+    if (isOpen) setActiveTab(initialTab);
+  }, [isOpen, initialTab]);
 
   return (
     <AnimatePresence>
@@ -150,46 +41,161 @@ const ProfileModal: React.FC<{
             initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
             className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
           >
-            <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50">
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-white">Meu Perfil</h2>
-              <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
-                <X className="w-6 h-6 text-zinc-400" />
-              </button>
+            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/50">
+              <div className="flex justify-between items-center mb-4 px-4 pt-4">
+                <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Preferências</h2>
+                <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all text-zinc-400 hover:text-zinc-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl mx-4 mb-2">
+                <button 
+                  onClick={() => setActiveTab('profile')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'profile' ? 'bg-white dark:bg-zinc-700 text-blue-600 shadow-sm' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                  <User className="w-4 h-4" /> Perfil
+                </button>
+                <button 
+                  onClick={() => setActiveTab('settings')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'settings' ? 'bg-white dark:bg-zinc-700 text-blue-600 shadow-sm' : 'text-zinc-400 hover:text-zinc-600'}`}
+                >
+                  <Settings className="w-4 h-4" /> Ajustes
+                </button>
+              </div>
             </div>
             
-            <div className="p-10 space-y-8">
-              <div className="flex flex-col items-center gap-4 mb-2">
-                <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center border-4 border-blue-500 shadow-xl shadow-blue-500/10">
-                  <User className="w-12 h-12 text-zinc-400" />
+            <div className="p-8 max-h-[70vh] overflow-y-auto">
+              {activeTab === 'profile' ? (
+                <div className="space-y-8">
+                  <div className="flex flex-col items-center gap-4 mb-2">
+                    <div className="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center border-4 border-blue-500 shadow-xl shadow-blue-500/10">
+                      <User className="w-12 h-12 text-zinc-400" />
+                    </div>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2">{user.role === 'admin' ? 'Administrador' : 'Acesso Aluno'}</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">Nome Completo</label>
+                    <input 
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-6 py-4 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl focus:border-blue-500 outline-none transition-all font-bold text-lg text-zinc-900 dark:text-white shadow-inner"
+                      placeholder="Seu nome"
+                    />
+                  </div>
+
+                  <button 
+                    onClick={() => { onUpdate(name); onClose(); }}
+                    className="w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 text-lg uppercase tracking-tight flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    Salvar Alterações
+                  </button>
                 </div>
-                <span className="text-xs font-black text-blue-500 uppercase tracking-widest mt-2">{user.role === 'admin' ? 'Administrador' : 'Aluno'}</span>
-              </div>
+              ) : (
+                <div className="space-y-6">
 
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-2">Nome Completo</label>
-                <input 
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-6 py-4 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl focus:border-blue-500 outline-none transition-all font-bold text-lg text-zinc-900 dark:text-white"
-                  placeholder="Seu nome"
-                />
-              </div>
+                  {/* Font Size */}
+                  <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
+                        <Type className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">Tamanho da Letra</p>
+                        <p className="text-[10px] text-zinc-400">Para facilitar sua leitura</p>
+                      </div>
+                    </div>
+                    <div className="px-2">
+                       <input 
+                        type="range" min="16" max="42" 
+                        value={settings.fontSize}
+                        onChange={(e) => updateSettings({ fontSize: parseInt(e.target.value) })}
+                        className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                      />
+                      <div className="flex justify-between mt-2 px-1">
+                        <span className="text-[9px] font-black text-zinc-400">A</span>
+                        <span className="text-[14px] font-black text-zinc-400">A</span>
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="pt-4 space-y-4">
-                <button 
-                  onClick={() => { onUpdate(name); onClose(); }}
-                  className="w-full py-5 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 text-lg"
-                >
-                  Salvar Alterações
-                </button>
-                <button 
-                  onClick={onClose}
-                  className="w-full py-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 font-bold transition-all text-sm"
-                >
-                  Cancelar
-                </button>
-              </div>
+                  {/* Sound Toggle */}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
+                            <Volume2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">Sons de Digitação</p>
+                            <p className="text-[10px] text-zinc-400">Ouvir o clique das teclas</p>
+                          </div>
+                        </div>
+                        <button 
+                        onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
+                        className={`w-12 h-6 rounded-full transition-all relative ${settings.soundEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-md ${settings.soundEnabled ? 'left-7' : 'left-1'}`} />
+                        </button>
+                      </div>
+                      {settings.soundEnabled && (
+                        <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-700">
+                          <label className="flex items-center gap-3 cursor-pointer group">
+                            <div className={`w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${settings.soundOnErrorOnly ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300 dark:border-zinc-600 group-hover:border-emerald-400'}`}>
+                              {settings.soundOnErrorOnly && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                            <input 
+                              type="checkbox" className="hidden" 
+                              checked={settings.soundOnErrorOnly}
+                              onChange={(e) => updateSettings({ soundOnErrorOnly: e.target.checked })}
+                            />
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tocar som apenas ao errar</span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
+                          <Keyboard className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">Teclado Numérico</p>
+                          <p className="text-[10px] text-zinc-400">Mostrar teclado lateral</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => updateSettings({ showNumeric: !settings.showNumeric })}
+                        className={`w-12 h-6 rounded-full transition-all relative ${settings.showNumeric ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-md ${settings.showNumeric ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
+                          <Monitor className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">Dicas e Instruções</p>
+                          <p className="text-[10px] text-zinc-400">Mostrar janela antes da lição</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => updateSettings({ showInstructions: !settings.showInstructions })}
+                        className={`w-12 h-6 rounded-full transition-all relative ${settings.showInstructions ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-md ${settings.showInstructions ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -560,17 +566,18 @@ const AppContent: React.FC = () => {
           onComplete={handleCompleteLesson}
           onBack={handleCancelLesson}
           onOpenCourses={() => setIsCoursesOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
           hasNextLesson={lessons.findIndex(l => l.id === currentLesson.id) < lessons.length - 1}
         />
       )}
 
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       {user && (
         <ProfileModal 
-          isOpen={isProfileOpen} 
-          onClose={() => setIsProfileOpen(false)} 
+          isOpen={isProfileOpen || isSettingsOpen} 
+          onClose={() => { setIsProfileOpen(false); setIsSettingsOpen(false); }} 
           user={user} 
-          onUpdate={handleUpdateProfile} 
+          onUpdate={handleUpdateProfile}
+          initialTab={isSettingsOpen ? 'settings' : 'profile'}
         />
       )}
 
