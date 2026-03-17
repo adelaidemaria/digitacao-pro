@@ -114,23 +114,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
             <span className="text-2xl font-black text-zinc-800 dark:text-white tracking-tight">Admin Panel</span>
           </div>
 
-          {/* Admin Profile Card */}
-          <div 
-            onClick={() => setIsAdminProfileOpen(true)}
-            className="mb-8 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-xl flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
-                <User className="w-5 h-5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-              </div>
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <span className="text-sm font-black text-zinc-900 dark:text-white truncate">{user.full_name}</span>
-                <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
-                  Meu Perfil
-                </span>
-              </div>
-            </div>
-          </div>
+
 
           <nav className="space-y-2">
             <button 
@@ -172,7 +156,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
           </nav>
         </div>
 
-        <div className="mt-auto p-8 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="mt-auto p-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4">
+          {/* Admin Profile Card */}
+          <div 
+            onClick={() => setIsAdminProfileOpen(true)}
+            className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-xl flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
+                <User className="w-5 h-5 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <span className="text-sm font-black text-zinc-900 dark:text-white truncate">{user.full_name}</span>
+                <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
+                  Meu Perfil
+                </span>
+              </div>
+            </div>
+          </div>
+
           <button 
             onClick={onLogout}
             className="w-full flex items-center justify-center gap-3 p-5 bg-rose-500 hover:bg-rose-600 rounded-[20px] text-white font-black shadow-xl shadow-rose-500/20 transition-all hover:scale-[1.02] uppercase tracking-widest text-xs"

@@ -4,7 +4,7 @@ import { useTypingEngine } from '../hooks/useTypingEngine';
 import { useSettings } from '../contexts/SettingsContext';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { useSound } from '../hooks/useSound';
-import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play } from 'lucide-react';
+import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play, Video, ExternalLink, X } from 'lucide-react';
 import { Lesson } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -14,9 +14,10 @@ interface TypingViewProps {
   onComplete: (stats: any, navigateTo?: 'next' | 'dashboard' | 'none') => void;
   onBack: () => void;
   hasNextLesson?: boolean;
+  onOpenCourses: () => void;
 }
 
-export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson }) => {
+export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses }) => {
   const { settings } = useSettings();
   const [isStarted, setIsStarted] = useState(false);
   const { input, stats, reset } = useTypingEngine(lesson.content, settings, !isStarted);
@@ -135,7 +136,17 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
             </div>
           </div>
           
-          <div className="mt-auto">
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+            <button 
+              onClick={onOpenCourses}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black text-sm rounded-xl transition-all border-2 border-blue-200/50 dark:border-blue-500/30 group"
+            >
+              <Video className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span>+ CURSOS</span>
+            </button>
+          </div>
+
+          <div className="mt-auto pt-2">
             <button 
               onClick={handleReset}
               className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold text-base rounded-xl transition-all flex items-center justify-center gap-3 border-2 border-emerald-200/50 dark:border-emerald-500/30"

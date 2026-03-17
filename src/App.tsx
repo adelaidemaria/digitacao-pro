@@ -5,7 +5,7 @@ import { Dashboard } from './views/Dashboard';
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
 import { Module, Lesson, Profile, Plan, Course } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User, Activity } from 'lucide-react';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
@@ -214,6 +214,7 @@ const AppContent: React.FC = () => {
   const [progress, setProgress] = useState<any[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorNotification, setErrorNotification] = useState<{ message: string; submessage?: string } | null>(null);
 
@@ -534,6 +535,7 @@ const AppContent: React.FC = () => {
           announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
           onCourseClick={adminHandlers.incrementCourseClick}
+          onOpenCourses={() => setIsCoursesOpen(true)}
         />
       )}
 
@@ -557,6 +559,7 @@ const AppContent: React.FC = () => {
           lessons={lessons}
           onComplete={handleCompleteLesson}
           onBack={handleCancelLesson}
+          onOpenCourses={() => setIsCoursesOpen(true)}
           hasNextLesson={lessons.findIndex(l => l.id === currentLesson.id) < lessons.length - 1}
         />
       )}
@@ -570,6 +573,97 @@ const AppContent: React.FC = () => {
           onUpdate={handleUpdateProfile} 
         />
       )}
+
+      {/* Global Courses Modal */}
+      <AnimatePresence>
+        {isCoursesOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-4xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col"
+            >
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
+                <div>
+                  <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                    <Video className="w-6 h-6 text-blue-500" /> Nossos Cursos
+                  </h2>
+                  <p className="text-zinc-500 text-sm font-bold mt-1">Avance seus conhecimentos com nossos cursos especializados com certificado.</p>
+                </div>
+                <button onClick={() => setIsCoursesOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto space-y-6">
+                {courses.filter(c => c.active).length === 0 ? (
+                  <div className="text-center py-12">
+                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Nenhum curso disponível no momento.</p>
+                  </div>
+                ) : (
+                  courses.filter(c => c.active).sort((a,b) => (a.order||0)-(b.order||0)).map((course) => (
+                    <div key={course.id} className="group flex flex-col md:flex-row bg-white dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5">
+                      <div className="flex-1 p-8">
+                        <div className="flex justify-between items-start gap-4 mb-4">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white leading-tight uppercase tracking-tight">{course.title}</h3>
+                          {course.promotional_price && (
+                            <span className="shrink-0 px-3 py-1 bg-rose-500 text-white text-[10px] font-black rounded-lg uppercase tracking-widest animate-pulse">
+                              Oferta Especial
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-zinc-500 dark:text-zinc-400 font-medium mb-6 leading-relaxed">
+                          {course.description}
+                        </p>
+                        
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                          <div>
+                            {course.promotional_price ? (
+                              <div className="flex flex-col">
+                                <span className="text-xs text-emerald-500 font-black uppercase tracking-widest mb-1">
+                                  Valor Promocional
+                                </span>
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-sm text-zinc-400 font-bold line-through">
+                                    de R$ {course.price.toFixed(2).replace('.', ',')}
+                                  </span>
+                                  <span className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                    por R$ {course.promotional_price.toFixed(2).replace('.', ',')}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col">
+                                <span className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">
+                                  Investimento
+                                </span>
+                                <span className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
+                                  R$ {course.price.toFixed(2).replace('.', ',')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <a 
+                            href={course.payment_url} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            onClick={() => adminHandlers.incrementCourseClick(course.id)}
+                            className="w-full md:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
+                          >
+                            Veja a Oferta no Site <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Custom Error Notification Modal */}
       <AnimatePresence>
