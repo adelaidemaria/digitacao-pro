@@ -5,7 +5,7 @@ import { Dashboard } from './views/Dashboard';
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
 import { Module, Lesson, Profile, Plan } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User } from 'lucide-react';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
@@ -207,12 +207,14 @@ const AppContent: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<any[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errorNotification, setErrorNotification] = useState<{ message: string; submessage?: string } | null>(null);
 
   // Helper function to fetch plans with their linked modules
   const fetchPlans = async () => {
@@ -241,13 +243,15 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [modulesRes, lessonsRes] = await Promise.all([
+        const [modulesRes, lessonsRes, announcementsRes] = await Promise.all([
           supabase.from('modules').select('*').order('order'),
-          supabase.from('lessons').select('*').order('order')
+          supabase.from('lessons').select('*').order('order'),
+          supabase.from('announcements').select('*').order('created_at', { ascending: false })
         ]);
 
         if (modulesRes.data) setModules(modulesRes.data);
         if (lessonsRes.data) setLessons(lessonsRes.data);
+        if (announcementsRes.data) setAnnouncements(announcementsRes.data);
         
         await fetchPlans();
       } catch (err) {
@@ -299,7 +303,7 @@ const AppContent: React.FC = () => {
     setView('typing');
   };
 
-  const handleCompleteLesson = async (stats: any, goToNext: boolean = false) => {
+  const handleCompleteLesson = async (stats: any, navigateTo: 'next' | 'dashboard' | 'none' = 'dashboard') => {
     if (currentLesson && user) {
       const newProgress = { 
         user_id: user.id, 
@@ -308,22 +312,44 @@ const AppContent: React.FC = () => {
         accuracy: stats.accuracy 
       };
       
-      const { error } = await supabase.from('progress').insert([newProgress]);
+      const { error } = await supabase.from('progress').upsert([newProgress], { onConflict: 'user_id,lesson_id' });
       if (error) {
         console.error('Erro ao salvar progresso:', error);
-        alert('Atenção: Não foi possível salvar seu progresso no banco de dados. Verifique a conexão.');
+        setErrorNotification({ 
+          message: 'Erro ao Salvar Progresso', 
+          submessage: 'Não foi possível salvar seus dados no banco de dados. Verifique sua conexão com a internet.' 
+        });
       } else {
-        setProgress(prev => [...prev, newProgress]);
+        setProgress(prev => {
+          const filtered = prev.filter(p => p.lesson_id !== currentLesson.id);
+          return [...filtered, newProgress];
+        });
       }
     }
     
-    if (goToNext && currentLesson) {
+    if (navigateTo === 'none') return;
+
+    if (navigateTo === 'next' && currentLesson) {
       const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
       const nextLesson = lessons[currentIndex + 1];
       if (nextLesson) {
         setCurrentLesson(nextLesson);
         setView('typing');
         return;
+      }
+    }
+    
+    setView('dashboard');
+    setCurrentLesson(null);
+  };
+
+  const handleCancelLesson = async () => {
+    if (currentLesson && user) {
+      const { error } = await supabase.from('progress').delete().eq('user_id', user.id).eq('lesson_id', currentLesson.id);
+      if (error) {
+        console.error('Erro ao remover progresso:', error);
+      } else {
+        setProgress(prev => prev.filter(p => p.lesson_id !== currentLesson.id));
       }
     }
     
@@ -424,8 +450,43 @@ const AppContent: React.FC = () => {
       if (!error) {
         setPlans(prev => prev.filter(p => p.id !== id));
       }
+    },
+
+    // Announcements
+    saveAnnouncement: async (announcementData: any) => {
+      const payload = { ...announcementData };
+      if (!payload.id) delete payload.id;
+
+      const { error } = await supabase.from('announcements').upsert(payload);
+      if (!error) {
+        const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+        if (data) setAnnouncements(data);
+      }
+    },
+    deleteAnnouncement: async (id: string) => {
+      const { error } = await supabase.from('announcements').delete().eq('id', id);
+      if (!error) setAnnouncements(prev => prev.filter(a => a.id !== id));
+    },
+    incrementAnnouncementClick: async (id: string) => {
+      const { data: current } = await supabase.from('announcements').select('clicks').eq('id', id).single();
+      const newClicks = (current?.clicks || 0) + 1;
+      const { error } = await supabase.from('announcements').update({ clicks: newClicks }).eq('id', id);
+      if (!error) {
+        setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, clicks: newClicks } : a));
+      }
     }
   };
+
+  if (loading && view !== 'login') {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-zinc-500 font-black animate-pulse uppercase tracking-[0.2em] text-[10px]">Carregando ambiente...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -436,11 +497,14 @@ const AppContent: React.FC = () => {
           user={user}
           modules={modules}
           lessons={lessons}
+          plans={plans}
           progress={progress}
           onStartLesson={handleStartLesson}
           onLogout={() => setView('login')}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenProfile={() => setIsProfileOpen(true)}
+          announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
+          onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
         />
       )}
 
@@ -451,8 +515,9 @@ const AppContent: React.FC = () => {
           modules={modules}
           lessons={lessons}
           plans={plans}
+          announcements={announcements}
           onLogout={() => setView('login')}
-          handlers={adminHandlers}
+          handlers={adminHandlers as any}
         />
       )}
 
@@ -461,7 +526,7 @@ const AppContent: React.FC = () => {
           lesson={currentLesson}
           lessons={lessons}
           onComplete={handleCompleteLesson}
-          onBack={() => setView('dashboard')}
+          onBack={handleCancelLesson}
           hasNextLesson={lessons.findIndex(l => l.id === currentLesson.id) < lessons.length - 1}
         />
       )}
@@ -475,6 +540,38 @@ const AppContent: React.FC = () => {
           onUpdate={handleUpdateProfile} 
         />
       )}
+
+      {/* Custom Error Notification Modal */}
+      <AnimatePresence>
+        {errorNotification && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden border border-rose-100 dark:border-rose-900/30"
+            >
+              <div className="p-10 flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 mb-6 shadow-lg shadow-rose-500/10">
+                  <Activity className="w-10 h-10" />
+                </div>
+                <h3 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-2">
+                  {errorNotification.message}
+                </h3>
+                <p className="text-sm font-bold text-zinc-400 mb-8 leading-relaxed lowercase">
+                  {errorNotification.submessage}
+                </p>
+                <button 
+                  onClick={() => setErrorNotification(null)}
+                  className="w-full py-5 bg-zinc-900 dark:bg-zinc-800 text-white font-black rounded-2xl hover:opacity-90 transition-all uppercase tracking-[0.2em] text-xs"
+                >
+                  Entendi
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

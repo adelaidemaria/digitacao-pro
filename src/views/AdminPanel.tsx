@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp } from 'lucide-react';
-import { Module, Lesson, Profile, Plan } from '../types';
+import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge } from 'lucide-react';
+import { Module, Lesson, Profile, Plan, Announcement } from '../types';
 
 interface AdminPanelProps {
   user: Profile;
@@ -9,6 +9,7 @@ interface AdminPanelProps {
   modules: Module[];
   lessons: Lesson[];
   plans: Plan[];
+  announcements: Announcement[];
   onLogout: () => void;
   handlers: {
     saveUser: (user: Profile, password?: string) => void;
@@ -19,11 +20,13 @@ interface AdminPanelProps {
     deleteLesson: (id: string) => void;
     savePlan: (plan: Plan) => void;
     deletePlan: (id: string) => void;
+    saveAnnouncement: (announcement: Announcement) => void;
+    deleteAnnouncement: (id: string) => void;
   };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, onLogout, handlers }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans'>('dashboard');
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], onLogout, handlers }) => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements'>('dashboard');
   
   // Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -36,15 +39,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   
   // Editing States
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
   // Delete confirmation state
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan', title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement', title: string } | null>(null);
   
   // Success feedback state
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -55,10 +60,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setIsModuleModalOpen(false);
     setIsLessonModalOpen(false);
     setIsPlanModalOpen(false);
+    setIsAnnouncementModalOpen(false);
     setEditingUser(null);
     setEditingModule(null);
     setEditingLesson(null);
     setEditingPlan(null);
+    setEditingAnnouncement(null);
     setConfirmDelete(null);
   };
 
@@ -82,6 +89,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     }
     if (confirmDelete.type === 'lesson') handlers.deleteLesson(confirmDelete.id);
     if (confirmDelete.type === 'plan') handlers.deletePlan(confirmDelete.id);
+    if (confirmDelete.type === 'announcement') handlers.deleteAnnouncement(confirmDelete.id);
     
     setConfirmDelete(null);
   };
@@ -141,6 +149,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
             >
               <CreditCard className="w-5 h-5 flex-shrink-0" /> Planos
             </button>
+            <button 
+              onClick={() => setActiveTab('announcements')}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'announcements' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+            >
+              <Megaphone className="w-5 h-5 flex-shrink-0" /> Mensagens
+            </button>
           </nav>
         </div>
 
@@ -159,7 +173,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight line-clamp-1 uppercase">
-              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : 'Planos de Acesso'}
+              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : 'Mensagens em Destaque'}
             </h1>
             <p className="text-zinc-500 text-lg">
               {activeTab === 'dashboard' ? 'Bem-vindo de volta! Aqui está o resumo da sua plataforma.' : 'Administre e organize sua plataforma de ensino.'}
@@ -171,10 +185,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 if (activeTab === 'users') setIsUserModalOpen(true);
                 if (activeTab === 'content') setIsModuleModalOpen(true);
                 if (activeTab === 'plans') setIsPlanModalOpen(true);
+                if (activeTab === 'announcements') setIsAnnouncementModalOpen(true);
               }}
               className="flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap"
             >
-              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : 'Novo Plano'}
+              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : 'Nova Mensagem'}
             </button>
           )}
         </header>
@@ -568,9 +583,90 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
             </div>
           )}
-          </div>
-        )}
-      </main>
+
+          {activeTab === 'announcements' && (
+            <div className="flex flex-col">
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                    <Megaphone className="w-4 h-4 text-blue-500" /> Mensagens em Destaque (Scrolling)
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Cliques</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Público-Alvo</th>
+                      <th className="px-10 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {announcements.map(ann => (
+                      <tr key={ann.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-all group">
+                        <td className="px-10 py-8">
+                          <div className="flex flex-col">
+                            <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight">{ann.content}</span>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Criado em {new Date(ann.created_at!).toLocaleDateString()}</span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="text-2xl font-black text-zinc-900 dark:text-white">{ann.clicks || 0}</span>
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cliques</span>
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-center">
+                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ann.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                            {ann.active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="px-10 py-8 text-center min-w-[200px]">
+                          <div className="flex flex-wrap justify-center gap-1">
+                            {ann.target_plans?.length > 0 ? (
+                              ann.target_plans.map(pId => {
+                                const plan = plans.find(p => p.id === pId);
+                                return (
+                                  <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
+                                    {plan?.name || '---'}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="text-[10px] font-black text-rose-500 uppercase">Nenhum plano</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-10 py-8 text-right">
+                          <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                            <button 
+                              onClick={() => { setEditingAnnouncement(ann); setIsAnnouncementModalOpen(true); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                            >
+                              <Edit2 className="w-4 h-4" /> Alterar
+                            </button>
+                            <button 
+                              onClick={() => { setConfirmDelete({ id: ann.id, type: 'announcement', title: ann.content.substring(0, 20) + '...' }); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                            >
+                              <Trash2 className="w-4 h-4" /> Excluir
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </main>
 
       {/* --- MODALS --- */}
       <Modal isOpen={isUserModalOpen} onClose={resetModals} title={editingUser ? 'Alterar Aluno' : 'Novo Aluno'} maxWidth="max-w-xl">
@@ -591,6 +687,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
 
       <Modal isOpen={isPlanModalOpen} onClose={resetModals} title={editingPlan ? 'Alterar Plano' : 'Novo Plano'} maxWidth="max-w-3xl">
         <PlanForm plan={editingPlan} modules={modules} onSave={(data) => { handlers.savePlan(data); onSaveComplete('Plano de acesso atualizado com sucesso!'); }} />
+      </Modal>
+
+      <Modal isOpen={isAnnouncementModalOpen} onClose={resetModals} title={editingAnnouncement ? 'Alterar Mensagem' : 'Nova Mensagem'} maxWidth="max-w-xl">
+        <AnnouncementForm plans={plans} announcement={editingAnnouncement} onSave={(data) => { handlers.saveAnnouncement(data); onSaveComplete('Mensagem programada com sucesso!'); }} />
       </Modal>
 
       <AnimatePresence>
@@ -937,6 +1037,188 @@ const PlanForm: React.FC<{ plan: Plan | null; modules: Module[]; onSave: (p: Pla
 
       <button onClick={() => onSave({ id: plan?.id || '', name, validity_days: val, price, is_promotional: isProm, promotional_price: promPrice, payment_url: url, promotional_payment_url: promUrl, active, accessible_modules: selectedMods })} className="w-full py-6 bg-blue-500 text-white font-black rounded-[24px] shadow-2xl shadow-blue-500/30 text-lg hover:bg-blue-600 transition-all uppercase tracking-[0.2em] active:scale-[0.98]">
         {plan?.id ? 'ATUALIZAR PLANO' : 'CADASTRAR NOVO PLANO'}
+      </button>
+    </div>
+  );
+};
+
+const AnnouncementForm: React.FC<{ plans: Plan[]; announcement: Announcement | null; onSave: (a: Announcement) => void }> = ({ plans, announcement, onSave }) => {
+  const [content, setContent] = useState(announcement?.content || '');
+  const [link, setLink] = useState(announcement?.link || '');
+  const [active, setActive] = useState(announcement?.active ?? true);
+  const [bgColor, setBgColor] = useState(announcement?.bg_color || '#312e81');
+  const [textColor, setTextColor] = useState(announcement?.text_color || '#ffffff');
+  const [speed, setSpeed] = useState(announcement?.speed ?? 5);
+  const [selectedPlans, setSelectedPlans] = useState<string[]>(announcement?.target_plans || (plans.length > 0 ? [plans[0].id] : []));
+
+  const togglePlan = (id: string) => {
+    setSelectedPlans(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Texto da Mensagem</label>
+          <textarea 
+            rows={3}
+            value={content} 
+            onChange={e => setContent(e.target.value)} 
+            placeholder="Digite a mensagem que ficará correndo no topo do dashboard..." 
+            className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all resize-none" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Link de Destino (Opcional)</label>
+          <div className="relative">
+            <Link className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+            <input 
+              value={link} 
+              onChange={e => setLink(e.target.value)} 
+              placeholder="https://exemplo.com/pagina-nova" 
+              className="w-full pl-14 pr-5 py-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all" 
+            />
+          </div>
+          <p className="text-[10px] text-zinc-400 font-medium">Ao clicar na mensagem, o usuário será levado para este link.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="p-6 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+            <div className="flex items-center gap-3 mb-4">
+              <Palette className="w-5 h-5 text-blue-500" />
+              <label className="text-[12px] font-black uppercase tracking-widest text-zinc-800 dark:text-white">Cor do Fundo</label>
+            </div>
+            <div className="flex items-center gap-4">
+              <input 
+                type="color" 
+                value={bgColor} 
+                onChange={e => setBgColor(e.target.value)}
+                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white dark:border-zinc-700 shadow-xl"
+              />
+              <input 
+                type="text" 
+                value={bgColor} 
+                onChange={e => setBgColor(e.target.value)}
+                className="flex-1 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl font-mono text-xs uppercase"
+              />
+            </div>
+          </div>
+
+          <div className="p-6 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+            <div className="flex items-center gap-3 mb-4">
+              <Palette className="w-5 h-5 text-indigo-500" />
+              <label className="text-[12px] font-black uppercase tracking-widest text-zinc-800 dark:text-white">Cor da Fonte</label>
+            </div>
+            <div className="flex items-center gap-4">
+              <input 
+                type="color" 
+                value={textColor} 
+                onChange={e => setTextColor(e.target.value)}
+                className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white dark:border-zinc-700 shadow-xl"
+              />
+              <input 
+                type="text" 
+                value={textColor} 
+                onChange={e => setTextColor(e.target.value)}
+                className="flex-1 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl font-mono text-xs uppercase"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Live Preview */}
+        <div className="space-y-4">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Prévia do Banner</label>
+          <div className="overflow-hidden rounded-2xl py-4 shadow-lg flex items-center justify-center relative border border-black/5" style={{ backgroundColor: bgColor }}>
+            <span className="font-extrabold text-lg uppercase tracking-tight z-10" style={{ color: textColor }}>
+              {content || 'SUA MENSAGEM APARECERÁ AQUI'}
+            </span>
+          </div>
+        </div>
+
+        <div className="p-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-500">
+                <Gauge className="w-5 h-5" />
+              </div>
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-zinc-800 dark:text-white block">Velocidade do Scroll</label>
+                <span className="text-[10px] text-zinc-400 font-bold uppercase">De 0 (Lento) a 10 (Rápido)</span>
+              </div>
+            </div>
+            <span className="text-3xl font-black text-blue-500">{speed}</span>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="10" 
+            step="1"
+            value={speed} 
+            onChange={e => setSpeed(parseInt(e.target.value))}
+            className="w-full h-3 bg-zinc-200 dark:bg-zinc-700 rounded-full appearance-none cursor-pointer accent-blue-500"
+          />
+          <div className="flex justify-between mt-3 px-1 text-[9px] font-black text-zinc-400 uppercase tracking-tighter">
+            <span>Tortuga</span>
+            <span>Relâmpago</span>
+          </div>
+        </div>
+
+        <div className="p-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-500">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-zinc-800 dark:text-white block">Planos que verão esta mensagem</label>
+              <span className="text-[10px] text-zinc-400 font-bold uppercase">Selecione um ou mais planos</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {plans.map(plan => (
+              <button
+                key={plan.id}
+                onClick={() => togglePlan(plan.id)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left ${selectedPlans.includes(plan.id) ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-500'}`}
+              >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedPlans.includes(plan.id) ? 'border-white bg-white/20' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                  {selectedPlans.includes(plan.id) && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                </div>
+                <span className="text-xs font-black uppercase tracking-tight truncate">{plan.name}</span>
+              </button>
+            ))}
+          </div>
+          {selectedPlans.length === 0 && (
+            <p className="mt-4 text-[10px] text-rose-500 font-black uppercase flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" /> Selecione pelo menos um plano
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4 py-6 px-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+          <button 
+            onClick={() => setActive(!active)} 
+            className={`w-14 h-8 rounded-full transition-all relative ${active ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+          >
+            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${active ? 'left-7' : 'left-1'}`} />
+          </button>
+          <div className="flex flex-col">
+            <span className="font-black text-[11px] uppercase tracking-widest text-zinc-800 dark:text-white">
+              {active ? 'MENSAGEM ATIVA' : 'MENSAGEM DESATIVADA'}
+            </span>
+            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Somente mensagens ativas aparecem para os alunos</span>
+          </div>
+        </div>
+      </div>
+
+      <button 
+        disabled={selectedPlans.length === 0}
+        onClick={() => onSave({ id: announcement?.id || '', content, link, active, clicks: announcement?.clicks || 0, bg_color: bgColor, text_color: textColor, speed, target_plans: selectedPlans })} 
+        className={`w-full py-6 text-white font-black rounded-[24px] shadow-2xl text-lg transition-all uppercase tracking-[0.2em] active:scale-[0.98] ${selectedPlans.length === 0 ? 'bg-zinc-400 cursor-not-allowed shadow-none' : 'bg-blue-500 shadow-blue-500/30 hover:bg-blue-600'}`}
+      >
+        {announcement?.id ? 'ATUALIZAR MENSAGEM' : 'PROGRAMAR MENSAGEM'}
       </button>
     </div>
   );

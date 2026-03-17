@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink } from 'lucide-react';
-import { Module, Lesson, Plan } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone } from 'lucide-react';
+import { Module, Lesson, Plan, Announcement } from '../types';
 
 interface DashboardProps {
   user: any;
@@ -13,11 +13,15 @@ interface DashboardProps {
   onLogout: () => void;
   onOpenSettings: () => void;
   onOpenProfile: () => void;
+  announcement?: Announcement;
+  onAnnouncementClick?: (id: string) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, modules, lessons, plans, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile 
+  user, modules, lessons, plans, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick 
 }) => {
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
   const userPlan = plans.find(p => p.id === user.plan_id);
   const accessibleModuleIds = userPlan?.accessible_modules || [];
   
@@ -50,6 +54,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
     ? Math.round(progress.reduce((acc, curr) => acc + (curr.wpm || 0), 0) / progress.length)
     : 0;
 
+  const achievements = [
+    { 
+      id: 'first-lesson', 
+      title: 'Primeiro Passo', 
+      desc: 'Concluiu sua primeira lição', 
+      icon: <CheckCircle className="w-5 h-5" />,
+      completed: progress.length > 0
+    },
+    { 
+      id: 'fast-typer', 
+      title: 'Veloz', 
+      desc: 'Alcançou mais de 40 PPM', 
+      icon: <TrendingUp className="w-5 h-5" />,
+      completed: progress.some(p => (p.wpm || 0) >= 40)
+    },
+    { 
+      id: 'accurate', 
+      title: 'Perfeccionista', 
+      desc: 'Lição com 100% de precisão', 
+      icon: <Award className="w-5 h-5" />,
+      completed: progress.some(p => (p.accuracy || 0) === 100)
+    },
+    { 
+      id: 'module-master', 
+      title: 'Mestre de Módulo', 
+      desc: 'Concluiu um módulo inteiro', 
+      icon: <Crown className="w-5 h-5" />,
+      completed: modules.some(m => isModuleCompleted(m.id))
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100">
       {/* Sidebar */}
@@ -60,29 +95,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
               D
             </div>
             <div>
-              <span className="block font-black text-xl text-zinc-900 dark:text-white tracking-tight leading-none">Digitador Pro</span>
+              <span className="block font-black text-xl text-zinc-900 dark:text-white tracking-tight leading-none">Digitação Sem Segredo</span>
               <span className="text-[10px] font-bold text-blue-500 tracking-widest uppercase">{userPlan?.name || 'Iniciante'}</span>
             </div>
           </div>
 
-          {/* User Profile */}
-          <div 
-            onClick={onOpenProfile}
-            className="group relative mb-8 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white dark:bg-zinc-700 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
-                <User className="w-6 h-6 text-zinc-400" />
-              </div>
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <span className="text-base font-bold text-zinc-900 dark:text-white truncate">{user.full_name}</span>
-                <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
-                  <Activity className="w-3 h-3" /> Ver Perfil
-                </span>
-              </div>
-              <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-            </div>
-          </div>
 
           <nav className="space-y-1 mb-10">
             <button className="w-full flex items-center gap-3 px-5 py-3.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
@@ -91,8 +108,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <button className="w-full flex items-center gap-3 px-5 py-3.5 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all">
               <MessageSquare className="w-5 h-5 flex-shrink-0" /> <span className="text-base">Comunidade</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-5 py-3.5 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all">
-              <Award className="w-5 h-5 flex-shrink-0" /> <span className="text-base">Conquistas</span>
+            <button 
+              onClick={() => setIsAchievementsOpen(true)}
+              className="w-full flex items-center gap-3 px-5 py-3.5 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group"
+            >
+              <Award className="w-5 h-5 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> 
+              <span className="text-base">Conquistas</span>
+              {achievements.filter(a => a.completed).length > 0 && (
+                <span className="ml-auto bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full">
+                  {achievements.filter(a => a.completed).length}
+                </span>
+              )}
             </button>
           </nav>
 
@@ -133,6 +159,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
+            {/* User Profile Card - Moved here above Plan Card */}
+            <div 
+              onClick={onOpenProfile}
+              className="group relative p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white dark:bg-zinc-700 rounded-full flex items-center justify-center shadow-sm border border-zinc-100 dark:border-zinc-600">
+                  <User className="w-6 h-6 text-zinc-400" />
+                </div>
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <span className="text-base font-bold text-zinc-900 dark:text-white truncate">{user.full_name}</span>
+                  <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider flex items-center gap-1">
+                    <Activity className="w-3 h-3" /> Ver Perfil
+                  </span>
+                </div>
+                <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+              </div>
+            </div>
+
             <div className="relative overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-950 p-6 rounded-3xl text-white shadow-xl border border-zinc-700/50">
               <div className="absolute -top-6 -right-6 opacity-10">
                 <Award className="w-24 h-24" />
@@ -143,7 +188,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-zinc-400 text-xs mb-6 leading-relaxed font-bold uppercase tracking-wider">
                 {userPlan?.validity_days ? `${userPlan.validity_days} DIAS DE ACESSO` : 'ACESSO LIMITADO'}
               </p>
-              <button className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-xs transition-all uppercase tracking-widest border border-white/10">
+              <button 
+                onClick={() => setIsPlanDetailsOpen(true)}
+                className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-xs transition-all uppercase tracking-widest border border-white/10"
+              >
                 Ver detalhes
               </button>
             </div>
@@ -163,6 +211,54 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-12 lg:p-16 overflow-y-auto bg-white/30 dark:bg-transparent">
         <div className="max-w-[1200px] mx-auto">
+          {announcement && (
+            <div 
+              className="mb-10 overflow-hidden rounded-[28px] py-4 shadow-xl shadow-black/5 border border-black/5 relative group"
+              style={{ backgroundColor: announcement.bg_color }}
+            >
+              <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
+              
+              <div className="flex items-center">
+                <div className="px-6 shrink-0 z-20 flex items-center gap-2">
+                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl" style={{ color: announcement.text_color }}>
+                    <Megaphone className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70" style={{ color: announcement.text_color }}>Aviso:</span>
+                </div>
+
+                <div className="flex-1 overflow-hidden">
+                  <motion.div
+                    animate={{ x: ["50%", "-100%"] }}
+                    transition={{ 
+                      duration: 60 - ((announcement.speed ?? 5) * 5), 
+                      repeat: Infinity, 
+                      ease: "linear",
+                    }}
+                    className="whitespace-nowrap inline-block"
+                  >
+                    {announcement.link ? (
+                      <a 
+                        href={announcement.link} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        onClick={() => onAnnouncementClick?.(announcement.id)}
+                        className="font-extrabold text-lg uppercase tracking-tight hover:underline flex items-center gap-3 px-4"
+                        style={{ color: announcement.text_color }}
+                      >
+                        {announcement.content} <ArrowRight className="w-5 h-5 inline opacity-50" />
+                      </a>
+                    ) : (
+                      <span className="font-extrabold text-lg uppercase tracking-tight px-4" style={{ color: announcement.text_color }}>
+                        {announcement.content}
+                      </span>
+                    )}
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <header className="mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-white mb-3 tracking-tight">
               Olá, {user.full_name.split(' ')[0]}! 👋
@@ -232,61 +328,146 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {lessons.filter(l => l.module_id === module.id).sort((a,b) => (a.order||0) - (b.order||0)).map(lesson => {
-                        const status = getLessonStatus(lesson.id);
+                    <div className="w-full">
+                      <table className="w-full border-separate border-spacing-y-3">
+                        <thead>
+                          <tr className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                            <th className="px-4 md:px-8 pb-2 text-left">Lição</th>
+                            <th className="hidden lg:table-cell px-6 pb-2 text-center">Nível</th>
+                            <th className="hidden sm:table-cell px-6 pb-2 text-center">Velocidade</th>
+                            <th className="hidden sm:table-cell px-6 pb-2 text-center">Precisão</th>
+                            <th className="px-6 pb-2 text-right pr-4 md:pr-12">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lessons.filter(l => l.module_id === module.id).sort((a,b) => (a.order||0) - (b.order||0)).map(lesson => {
+                            const status = getLessonStatus(lesson.id);
 
-                        return (
-                          <motion.button
-                            key={lesson.id}
-                            whileHover={!isLocked ? { y: -8, scale: 1.02 } : {}}
-                            whileTap={!isLocked ? { scale: 0.98 } : {}}
-                            onClick={() => !isLocked && onStartLesson(lesson)}
-                            className={`p-8 rounded-[32px] border-2 text-left transition-all flex flex-col gap-8 shadow-sm ${
-                              status 
-                                ? 'bg-emerald-50/20 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-800 shadow-emerald-500/5' 
-                                : isLocked 
-                                  ? 'bg-zinc-100/30 dark:bg-zinc-900/10 border-zinc-100 dark:border-zinc-800' 
-                                  : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 hover:border-blue-400 hover:shadow-xl shadow-blue-500/5'
-                            }`}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className={`p-4 rounded-2xl shadow-sm ${status ? 'bg-emerald-500 text-white' : isLocked ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 border border-blue-100 dark:border-blue-800'}`}>
-                                {status ? <CheckCircle className="w-6 h-6" /> : isLocked ? <Lock className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-                              </div>
-                              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border-2 ${
-                                lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                                lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
-                                'bg-rose-50 border-rose-200 text-rose-600'
-                              }`}>
-                                {lesson.difficulty === 'easy' ? 'FÁCIL' : lesson.difficulty === 'medium' ? 'MÉDIO' : 'AVANÇADO'}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">AULA {lesson.order}</span>
-                                {status && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />}
-                              </div>
-                              <h3 className="font-black text-xl text-zinc-900 dark:text-white leading-tight">{lesson.title}</h3>
-                            </div>
-                            
-                            {status && (
-                              <div className="mt-auto pt-6 border-t border-emerald-100 dark:border-emerald-800/50 flex flex-col gap-2">
-                                <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter">
-                                  <span className="flex items-center gap-2 text-emerald-600"><Activity className="w-4 h-4" /> {status.wpm} PPM</span>
-                                  <span className="flex items-center gap-2 text-emerald-600"><Percent className="w-4 h-4" /> {status.accuracy}% Precisão</span>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {isLocked && !status && (
-                              <div className="mt-auto pt-4 flex items-center gap-2 text-zinc-400 font-bold text-xs uppercase tracking-widest">
-                                <Lock className="w-3.5 h-3.5" /> Requer Plano Premium
-                              </div>
-                            )}
-                          </motion.button>
-                        );
-                      })}
+                            return (
+                              <motion.tr
+                                key={lesson.id}
+                                whileHover={!isLocked ? { scale: 1.002, y: -1 } : {}}
+                                onClick={() => !isLocked && onStartLesson(lesson)}
+                                className={`group cursor-pointer transition-all ${
+                                  isLocked ? 'opacity-50' : ''
+                                }`}
+                              >
+                                {/* Lição Column */}
+                                <td className={`pl-4 md:pl-8 pr-4 md:pr-6 py-5 rounded-l-[24px] border-y-2 border-l-2 ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <div className="flex items-center gap-3 md:gap-5">
+                                    <div className={`w-8 h-8 md:w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
+                                      status ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 
+                                      isLocked ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' : 
+                                      'bg-blue-50 dark:bg-blue-900/20 text-blue-500 border border-blue-100'
+                                    }`}>
+                                      {status ? <CheckCircle className="w-4 h-4 md:w-5 h-5 font-black" /> : isLocked ? <Lock className="w-4 h-4 md:w-5 h-5" /> : <Play className="w-4 h-4 md:w-5 h-5 ml-0.5" />}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Aula {lesson.order}</span>
+                                      <span className="font-black text-sm md:text-base text-zinc-800 dark:text-white group-hover:text-blue-500 transition-colors uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{lesson.title}</span>
+                                      
+                                      {/* Mobile-only stats */}
+                                      <div className="flex sm:hidden items-center gap-3 mt-1.5">
+                                        {status ? (
+                                          <>
+                                            <span className="text-[9px] font-black text-emerald-600 flex items-center gap-1"><Activity className="w-2.5 h-2.5" /> {status.wpm}</span>
+                                            <span className="text-[9px] font-black text-blue-500 flex items-center gap-1"><Percent className="w-2.5 h-2.5" /> {status.accuracy}%</span>
+                                          </>
+                                        ) : (
+                                           <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border ${
+                                            lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                            lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                                            'bg-rose-50 border-rose-200 text-rose-600'
+                                          }`}>
+                                            {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Nível Column (Hidden on mobile/tablet) */}
+                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
+                                    lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                    lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                                    'bg-rose-50 border-rose-200 text-rose-600'
+                                  }`}>
+                                    {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
+                                  </span>
+                                </td>
+
+                                {/* Velocidade Column (Hidden on mobile) */}
+                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <div className="flex flex-col items-center">
+                                    {status ? (
+                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                        <Activity className="w-3.5 h-3.5 text-emerald-500" /> {status.wpm} PPM
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm font-bold text-zinc-300">--</span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Precisão Column (Hidden on mobile) */}
+                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <div className="flex flex-col items-center">
+                                    {status ? (
+                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                        <Percent className="w-3.5 h-3.5 text-blue-500" /> {status.accuracy}%
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm font-bold text-zinc-300">--</span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Status Column */}
+                                <td className={`pr-4 md:pr-12 pl-4 md:pl-6 py-5 rounded-r-[24px] border-y-2 border-r-2 text-right ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <div className="flex items-center justify-end gap-3 md:gap-5">
+                                    {status ? (
+                                      <>
+                                        <button 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onStartLesson(lesson);
+                                          }}
+                                          className="hidden md:flex text-[10px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-[0.2em] items-center gap-1.5 group/btn"
+                                        >
+                                          <RotateCcw className="w-3 h-3 transition-transform group-hover/btn:rotate-[-45deg]" /> Refazer
+                                        </button>
+                                        <span className="text-zinc-800 dark:text-white flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                          <span className="hidden xs:inline">Concluido</span> <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                        </span>
+                                      </>
+                                    ) : isLocked ? (
+                                      <span className="text-zinc-400 flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                        <span className="hidden xs:inline">Bloqueado</span> <Lock className="w-4 h-4" />
+                                      </span>
+                                    ) : (
+                                      <span className="text-blue-500 group-hover:translate-x-1 transition-transform flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                        <span className="hidden xs:inline">Iniciar</span> <ArrowRight className="w-4 h-4" />
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              </motion.tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
 
                     {isLocked && (
@@ -315,6 +496,147 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </main>
+
+      {/* Achievements Modal */}
+      <AnimatePresence>
+        {isAchievementsOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
+            >
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50">
+                <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Minhas Conquistas</h2>
+                <button onClick={() => setIsAchievementsOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="p-8 space-y-4">
+                {achievements.map((achievement) => (
+                  <div 
+                    key={achievement.id}
+                    className={`flex items-center gap-5 p-5 rounded-3xl border-2 transition-all ${
+                      achievement.completed 
+                        ? 'bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-800/50' 
+                        : 'bg-zinc-50 dark:bg-zinc-800/30 border-zinc-100 dark:border-zinc-800 opacity-60'
+                    }`}
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 ${
+                      achievement.completed 
+                        ? 'bg-amber-500 text-white border-amber-400 shadow-lg shadow-amber-500/20' 
+                        : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-400 border-zinc-200 dark:border-zinc-600'
+                    }`}>
+                      {achievement.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className={`text-base font-black uppercase tracking-tight ${achievement.completed ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-500'}`}>
+                        {achievement.title}
+                      </h4>
+                      <p className="text-xs font-bold text-zinc-400 lowercase">{achievement.desc}</p>
+                    </div>
+                    {achievement.completed && (
+                      <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
+                <button 
+                  onClick={() => setIsAchievementsOpen(false)}
+                  className="w-full py-4 bg-zinc-900 dark:bg-zinc-700 text-white font-black rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-xs"
+                >
+                  Continuar Praticando
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Plan Details Modal */}
+      <AnimatePresence>
+        {isPlanDetailsOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
+            >
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-800 dark:bg-zinc-800 text-white">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Detalhes do Plano</h2>
+                  <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">Configurações da sua conta</p>
+                </div>
+                <button onClick={() => setIsPlanDetailsOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="p-8 space-y-8">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-blue-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                    <Crown className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-1">Seu Plano Atual</span>
+                    <h3 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">{userPlan?.name || 'Gratuito'}</h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[28px] border border-zinc-100 dark:border-zinc-800">
+                    <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Validade</span>
+                    <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-black">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      {userPlan?.validity_days ? `${userPlan.validity_days} Dias` : 'Ilimitado'}
+                    </div>
+                  </div>
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[28px] border border-zinc-100 dark:border-zinc-800">
+                    <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Módulos</span>
+                    <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-black">
+                      <BookOpen className="w-4 h-4 text-blue-500" />
+                      {accessibleModuleIds.length} Liberados
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Módulos Acessíveis</span>
+                  <div className="flex flex-wrap gap-2">
+                    {accessibleModuleIds.map((mId, idx) => {
+                      const mod = modules.find(m => m.id === mId);
+                      return (
+                        <div key={mId} className="px-4 py-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border border-blue-100 dark:border-blue-500/20">
+                          {mod?.title || `Módulo ${idx + 1}`}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {!userPlan?.name.toLowerCase().includes('premium') && (
+                  <div className="p-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[32px] text-white shadow-lg shadow-amber-500/20">
+                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">Evolua seu Plano</h4>
+                    <p className="text-xs font-bold opacity-90 mb-4 leading-relaxed">Libere módulos avançados e ganhe certificado de conclusão exclusivo.</p>
+                    <button className="w-full py-3 bg-white text-amber-600 font-black rounded-xl text-xs uppercase tracking-widest hover:scale-[1.02] transition-all">
+                      Fazer Upgrade Agora
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-center">
+                <button onClick={() => setIsPlanDetailsOpen(false)} className="text-zinc-400 font-black text-xs uppercase tracking-[0.2em] hover:text-zinc-600 transition-colors">Fechar Detalhes</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

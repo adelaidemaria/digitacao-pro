@@ -91,7 +91,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-blue-500/20">
             <Keyboard className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-black text-zinc-800 dark:text-white mb-2 tracking-tight">Digitador Pro</h1>
+          <h1 className="text-3xl font-black text-zinc-800 dark:text-white mb-2 tracking-tight">Digitação Sem Segredo</h1>
           <p className="text-zinc-500 text-center font-medium">
             {mode === 'login' 
               ? 'Acesse sua conta para continuar praticando.' 

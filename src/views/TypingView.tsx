@@ -4,14 +4,14 @@ import { useTypingEngine } from '../hooks/useTypingEngine';
 import { useSettings } from '../contexts/SettingsContext';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { useSound } from '../hooks/useSound';
-import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, BookOpen, ChevronRight, Play } from 'lucide-react';
+import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play } from 'lucide-react';
 import { Lesson } from '../types';
 import confetti from 'canvas-confetti';
 
 interface TypingViewProps {
   lesson: Lesson;
   lessons: Lesson[];
-  onComplete: (stats: any, goToNext?: boolean) => void;
+  onComplete: (stats: any, navigateTo?: 'next' | 'dashboard' | 'none') => void;
   onBack: () => void;
   hasNextLesson?: boolean;
 }
@@ -48,6 +48,9 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
   useEffect(() => {
     if (stats.endTime && !showResults) {
       setShowResults(true);
+      // Auto-save results immediately without navigating
+      onComplete(stats, 'none');
+      
       confetti({
         particleCount: 150,
         spread: 70,
@@ -55,7 +58,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
         colors: ['#10b981', '#3b82f6', '#f59e0b']
       });
     }
-  }, [stats.endTime, showResults]);
+  }, [stats.endTime, showResults, stats, onComplete]);
 
   const handleReset = () => {
     setPrevInputLength(0);
@@ -63,6 +66,15 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
     setShowResults(false);
     setIsStarted(false);
     reset();
+  };
+
+  const handleBack = () => {
+    // If finished, just go back. If not, cancel (delete progress)
+    if (showResults) {
+      onComplete(stats, 'dashboard');
+    } else {
+      onBack();
+    }
   };
 
   useEffect(() => {
@@ -79,7 +91,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
         <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 flex-1 flex flex-col gap-5 overflow-y-auto max-h-[calc(100vh-120px)]">
           
           <button 
-            onClick={onBack}
+            onClick={handleBack}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl text-zinc-600 dark:text-zinc-300 font-black text-lg transition-all shadow-sm border-2 border-transparent"
           >
             <RotateCcw className="w-5 h-5 -scale-x-100" /> 
@@ -225,7 +237,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
               <div className="space-y-3">
                 <button 
                   autoFocus
-                  onClick={() => onComplete(stats, true)}
+                  onClick={() => onComplete(stats, 'next')}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-500/50 outline-none text-white font-black py-5 rounded-[20px] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 text-xl"
                 >
                   PRÓXIMA AULA <ArrowRight className="w-6 h-6" />
@@ -239,7 +251,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                     <RotateCcw className="w-4 h-4" /> REFAZER
                   </button>
                   <button 
-                    onClick={onBack}
+                    onClick={handleBack}
                     className="py-4 bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-bold rounded-2xl transition-all text-sm"
                   >
                     SAIR

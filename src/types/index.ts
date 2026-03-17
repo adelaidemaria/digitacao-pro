@@ -58,3 +58,16 @@ export interface Message {
   read: boolean;
   created_at: string;
 }
+
+export interface Announcement {
+  id: string;
+  content: string;
+  link: string;
+  active: boolean;
+  clicks: number;
+  bg_color: string;
+  text_color: string;
+  speed: number;
+  target_plans: string[];
+  created_at?: string;
+}
