@@ -509,16 +509,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50">
+              <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
                 <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Minhas Conquistas</h2>
                 <button onClick={() => setIsAchievementsOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
                   <X className="w-6 h-6 text-zinc-400" />
                 </button>
               </div>
               
-              <div className="p-8 space-y-4">
+              <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
                 {achievements.map((achievement) => (
                   <div 
                     key={achievement.id}
@@ -548,7 +548,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 ))}
               </div>
 
-              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
                 <button 
                   onClick={() => setIsAchievementsOpen(false)}
                   className="w-full py-4 bg-zinc-900 dark:bg-zinc-700 text-white font-black rounded-2xl hover:opacity-90 transition-all uppercase tracking-widest text-xs"
@@ -569,9 +569,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10"
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[90vh]"
             >
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-800 dark:bg-zinc-800 text-white">
+              <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-800 dark:bg-zinc-800 text-white shrink-0">
                 <div>
                   <h2 className="text-2xl font-black uppercase tracking-tight">Detalhes do Plano</h2>
                   <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">Configurações da sua conta</p>
@@ -581,7 +581,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
               </div>
               
-              <div className="p-8 space-y-8">
+              <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-blue-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
                     <Crown className="w-8 h-8" />
@@ -634,7 +634,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </div>
 
-              <div className="p-8 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-center">
+              <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 shrink-0 flex justify-center">
                 <button onClick={() => setIsPlanDetailsOpen(false)} className="text-zinc-400 font-black text-xs uppercase tracking-[0.2em] hover:text-zinc-600 transition-colors">Fechar Detalhes</button>
               </div>
             </motion.div>

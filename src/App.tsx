@@ -584,7 +584,7 @@ const AppContent: React.FC = () => {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="bg-white dark:bg-zinc-900 w-full max-w-4xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col"
             >
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
+              <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-800/50 shrink-0">
                 <div>
                   <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
                     <Video className="w-6 h-6 text-blue-500" /> Nossos Cursos
@@ -596,7 +596,7 @@ const AppContent: React.FC = () => {
                 </button>
               </div>
               
-              <div className="p-8 overflow-y-auto space-y-6">
+              <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar">
                 {courses.filter(c => c.active).length === 0 ? (
                   <div className="text-center py-12">
                      <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Nenhum curso disponível no momento.</p>
@@ -604,7 +604,7 @@ const AppContent: React.FC = () => {
                 ) : (
                   courses.filter(c => c.active).sort((a,b) => (a.order||0)-(b.order||0)).map((course) => (
                     <div key={course.id} className="group flex flex-col md:flex-row bg-white dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5">
-                      <div className="flex-1 p-8">
+                      <div className="flex-1 p-6">
                         <div className="flex justify-between items-start gap-4 mb-4">
                           <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white leading-tight uppercase tracking-tight">{course.title}</h3>
                           {course.promotional_price && (
