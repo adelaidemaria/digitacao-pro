@@ -8,6 +8,7 @@ interface Settings {
   showKeyboard: boolean;
   showNumeric: boolean;
   showInstructions: boolean;
+  showTimer: boolean;
 }
 
 interface SettingsContextType {
@@ -28,6 +29,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       showKeyboard: true,
       showNumeric: false,
       showInstructions: true,
+      showTimer: true,
     };
     if (saved) {
       try {

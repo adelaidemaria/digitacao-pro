@@ -327,6 +327,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <tr className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">
                             <th className="px-4 md:px-8 pb-2 text-left">Lição</th>
                             <th className="hidden lg:table-cell px-6 pb-2 text-center">Nível</th>
+                            <th className="hidden lg:table-cell px-6 pb-2 text-center">Tempo</th>
                             <th className="hidden sm:table-cell px-6 pb-2 text-center">Velocidade</th>
                             <th className="hidden sm:table-cell px-6 pb-2 text-center">Precisão</th>
                             <th className="px-6 pb-2 text-right pr-4 md:pr-12">Status</th>
@@ -361,7 +362,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     </div>
                                     <div className="flex flex-col min-w-0">
                                       <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Aula {lesson.order}</span>
-                                      <span className="font-black text-sm md:text-base text-zinc-800 dark:text-white group-hover:text-blue-500 transition-colors uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{lesson.title}</span>
+                                      <span className="font-bold text-sm md:text-base text-zinc-800 dark:text-white group-hover:text-blue-500 transition-colors uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{lesson.title}</span>
                                       
                                       {/* Mobile-only stats */}
                                       <div className="flex sm:hidden items-center gap-3 mt-1.5">
@@ -369,6 +370,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                           <>
                                             <span className="text-[9px] font-black text-emerald-600 flex items-center gap-1"><Activity className="w-2.5 h-2.5" /> {status.wpm}</span>
                                             <span className="text-[9px] font-black text-blue-500 flex items-center gap-1"><Percent className="w-2.5 h-2.5" /> {status.accuracy}%</span>
+                                            {status.duration_seconds && <span className="text-[9px] font-black text-zinc-500 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {status.duration_seconds} seg</span>}
                                           </>
                                         ) : (
                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border ${
@@ -397,6 +399,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                   }`}>
                                     {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
                                   </span>
+                                </td>
+
+                                {/* Tempo Column (Hidden on mobile/tablet) */}
+                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                } ${
+                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                }`}>
+                                  <div className="flex flex-col items-center">
+                                    {status?.duration_seconds ? (
+                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> {status.duration_seconds} seg
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm font-bold text-zinc-300">--</span>
+                                    )}
+                                  </div>
                                 </td>
 
                                 {/* Velocidade Column (Hidden on mobile) */}

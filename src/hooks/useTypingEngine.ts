@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { sounds } from '../services/soundService';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface TypingStats {
   wpm: number;
@@ -8,6 +7,7 @@ interface TypingStats {
   correct: number;
   startTime: number | null;
   endTime: number | null;
+  duration_seconds: number;
 }
 
 export const useTypingEngine = (text: string, settings: any, disabled: boolean = false) => {
@@ -19,63 +19,123 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
     correct: 0,
     startTime: null,
     endTime: null,
+    duration_seconds: 0,
+  });
+
+  // Use refs to keep track of current state inside the event listener without dependencies
+  const inputRef = useRef('');
+  const statsRef = useRef<TypingStats>({
+    wpm: 0,
+    accuracy: 100,
+    errors: 0,
+    correct: 0,
+    startTime: null,
+    endTime: null,
+    duration_seconds: 0,
   });
 
   const reset = useCallback(() => {
     setInput('');
-    setStats({
+    inputRef.current = '';
+    const initialStats = {
       wpm: 0,
       accuracy: 100,
       errors: 0,
       correct: 0,
       startTime: null,
       endTime: null,
-    });
+      duration_seconds: 0,
+    };
+    setStats(initialStats);
+    statsRef.current = initialStats;
   }, []);
 
+  const startTimer = useCallback(() => {
+    if (!statsRef.current.startTime) {
+      setStats(prev => ({ ...prev, startTime: Date.now() }));
+    }
+  }, []);
+
+  // Sync state to refs whenever they change (for resetting etc)
+  useEffect(() => {
+    inputRef.current = input;
+  }, [input]);
+
+  useEffect(() => {
+    statsRef.current = stats;
+  }, [stats]);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (disabled || stats.endTime) return;
-    if (e.key.length > 1 && e.key !== 'Backspace' && e.key !== ' ') return;
+    if (disabled || statsRef.current.endTime) return;
+    
+    // Ignore control keys, but allow Space (single char)
+    if (e.key.length > 1 && e.key !== 'Backspace' && e.key !== 'Enter' && e.key !== 'Tab') return;
     if (e.ctrlKey || e.altKey || e.metaKey) return;
 
     e.preventDefault();
 
-    const targetChar = text[input.length];
+    const currentInput = inputRef.current;
+    if (currentInput.length >= text.length) return;
+
+    const targetChar = text[currentInput.length];
     const typedChar = e.key;
 
     if (typedChar === 'Backspace') {
-      // We don't allow backspace in beginner mode to force focus on next key
-      // but we can enable it for advanced. For now, let's keep it simple.
+      // Logic for backspace if needed, but for now we keep the original logic
       return;
     }
 
-    if (!stats.startTime) {
+    if (!statsRef.current.startTime) {
       setStats(prev => ({ ...prev, startTime: Date.now() }));
     }
 
     if (typedChar === targetChar) {
-      setInput(prev => prev + typedChar);
+      const newInput = currentInput + typedChar;
+      setInput(newInput);
       setStats(prev => ({ ...prev, correct: prev.correct + 1 }));
-    } else {
-      setStats(prev => ({ ...prev, errors: prev.errors + 1 }));
-    }
-  }, [input, text, stats.startTime, stats.endTime, disabled]);
-
-  useEffect(() => {
-    if (input.length === text.length && text.length > 0 && !stats.endTime) {
-      const endTime = Date.now();
-      const durationInMinutes = (endTime - (stats.startTime || endTime)) / 60000;
-      const wpm = Math.round((text.length / 5) / (durationInMinutes || 1));
-      const accuracy = Math.round((stats.correct / (stats.correct + stats.errors)) * 100);
       
-      setStats(prev => ({ ...prev, endTime, wpm, accuracy }));
+      // Finished the lesson?
+      if (newInput.length === text.length) {
+        const endTime = Date.now();
+        setStats(prev => {
+          const startTime = prev.startTime || endTime;
+          const duration_seconds = Math.round((endTime - startTime) / 1000);
+          const durationInMinutes = Math.max(duration_seconds / 60, 0.01);
+          const wpm = Math.round((text.length / 5) / durationInMinutes);
+          const totalAttempts = prev.correct + 1 + prev.errors;
+          const accuracy = totalAttempts > 0 ? Math.round(((prev.correct + 1) / totalAttempts) * 100) : 100;
+          return { ...prev, endTime, wpm, accuracy, correct: prev.correct + 1, duration_seconds };
+        });
+      }
+    } else {
+      setStats(prev => {
+        const totalAttempts = prev.correct + prev.errors + 1;
+        const accuracy = totalAttempts > 0 ? Math.round((prev.correct / totalAttempts) * 100) : 100;
+        return { ...prev, errors: prev.errors + 1, accuracy };
+      });
     }
-  }, [input, text, stats]);
+  }, [text, disabled]);
+
+  // Update duration every second if started and not finished
+  useEffect(() => {
+    let interval: any;
+    if (stats.startTime && !stats.endTime) {
+      interval = setInterval(() => {
+        setStats(prev => {
+          if (prev.endTime) return prev;
+          const now = Date.now();
+          const duration_seconds = Math.round((now - (prev.startTime || now)) / 1000);
+          return { ...prev, duration_seconds };
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [stats.startTime, stats.endTime]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  return { input, stats, reset };
+  return { input, stats, reset, startTimer };
 };

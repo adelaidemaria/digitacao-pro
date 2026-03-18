@@ -30,6 +30,7 @@ export interface Lesson {
   instruction?: string;
   min_accuracy?: number;
   min_wpm?: number;
+  max_duration_seconds?: number;
 }
 
 export interface Plan {
@@ -51,6 +52,7 @@ export interface Progress {
   lesson_id: string;
   wpm: number;
   accuracy: number;
+  duration_seconds: number;
   completed_at: string;
 }
 

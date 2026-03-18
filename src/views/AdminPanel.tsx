@@ -555,11 +555,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                             <span className="flex items-center gap-1.5 text-sm font-black text-zinc-700 dark:text-zinc-200">
                               <Clock className="w-4 h-4 text-blue-400" /> {plan.validity_days} DIAS
                             </span>
-                            <div className="flex items-baseline gap-2">
+                            <div className="flex items-baseline gap-2 flex-nowrap">
                               {plan.is_promotional && (
-                                <span className="text-xs text-zinc-400 line-through font-bold">R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-xs text-zinc-400 line-through font-bold whitespace-nowrap text-right">R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                               )}
-                              <span className="text-lg font-black text-blue-600">R$ {(plan.is_promotional ? plan.promotional_price : plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              <span className="text-lg font-black text-blue-600 whitespace-nowrap">R$ {(plan.is_promotional ? plan.promotional_price : plan.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                             </div>
                           </div>
                         </td>
@@ -1001,6 +1001,7 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
   const [instruction, setInstruction] = useState(lesson?.instruction || '');
   const [minAcc, setMinAcc] = useState<number | ''>(lesson?.min_accuracy ?? '');
   const [minWpm, setMinWpm] = useState<number | ''>(lesson?.min_wpm ?? '');
+  const [maxDuration, setMaxDuration] = useState<number | ''>(lesson?.max_duration_seconds ?? '');
 
   return (
     <div className="space-y-6">
@@ -1028,10 +1029,14 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
         <textarea rows={2} value={instruction} onChange={e => setInstruction(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans text-sm" placeholder="Ex: Coloque o dedo indicador esquerdo na tecla F..." />
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
           <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Regra: Mínimo de Acerto % (Opcional)</label>
           <input type="number" value={minAcc} onChange={e => setMinAcc(e.target.value ? parseInt(e.target.value) : '')} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-amber-500 transition-all text-sm" placeholder="Ex: 80" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Regra: Tempo Máximo seg (Opcional)</label>
+          <input type="number" value={maxDuration} onChange={e => setMaxDuration(e.target.value ? parseInt(e.target.value) : '')} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-amber-500 transition-all text-sm" placeholder="Ex: 30" />
         </div>
         <div className="space-y-2">
           <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Regra: Mínimo de PPM (Opcional)</label>
@@ -1046,7 +1051,7 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
           </button>
         ))}
       </div>
-      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order, objective, instruction, min_accuracy: minAcc === '' ? undefined : minAcc, min_wpm: minWpm === '' ? undefined : minWpm })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
+      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order, objective, instruction, min_accuracy: minAcc === '' ? undefined : minAcc, min_wpm: minWpm === '' ? undefined : minWpm, max_duration_seconds: maxDuration === '' ? undefined : maxDuration })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
     </div>
   );
 };

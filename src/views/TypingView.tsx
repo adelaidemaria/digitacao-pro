@@ -4,7 +4,7 @@ import { useTypingEngine } from '../hooks/useTypingEngine';
 import { useSettings } from '../contexts/SettingsContext';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { useSound } from '../hooks/useSound';
-import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play, Video, ExternalLink, X, Info, Target, AlertCircle, Settings } from 'lucide-react';
+import { Trophy, RotateCcw, ArrowRight, LayoutGrid, Award, Play, Video, ExternalLink, X, Info, Target, AlertCircle, Settings, Clock } from 'lucide-react';
 import { Lesson } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -21,9 +21,10 @@ interface TypingViewProps {
 export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses, onOpenSettings }) => {
   const { settings } = useSettings();
   const [isStarted, setIsStarted] = useState(false);
-  const { input, stats, reset } = useTypingEngine(lesson.content, settings, !isStarted);
+  const { input, stats, reset, startTimer } = useTypingEngine(lesson.content, settings, !isStarted);
   const { playSuccess, playError } = useSound();
   const [showResults, setShowResults] = useState(false);
+  const [isCompletedHandled, setIsCompletedHandled] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   
   const [prevInputLength, setPrevInputLength] = useState(0);
@@ -49,13 +50,15 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
   }, [input.length, stats.errors, settings.soundEnabled, settings.soundOnErrorOnly, playSuccess, playError, prevInputLength, prevErrors]);
 
   useEffect(() => {
-    if (stats.endTime && !showResults) {
+    if (stats.endTime && !showResults && !isCompletedHandled) {
       setShowResults(true);
+      setIsCompletedHandled(true);
       // Auto-save results immediately without navigating
       const passedAccuracy = lesson.min_accuracy ? stats.accuracy >= lesson.min_accuracy : true;
       const passedWpm = lesson.min_wpm ? stats.wpm >= lesson.min_wpm : true;
+      const passedDuration = lesson.max_duration_seconds ? stats.duration_seconds <= lesson.max_duration_seconds : true;
       
-      if (passedAccuracy && passedWpm) {
+      if (passedAccuracy && passedWpm && passedDuration) {
         onComplete(stats, 'none');
         confetti({
           particleCount: 150,
@@ -65,12 +68,13 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
         });
       }
     }
-  }, [stats.endTime, showResults, stats, onComplete, lesson.min_accuracy, lesson.min_wpm]);
+  }, [stats.endTime, showResults, stats, onComplete, lesson.min_accuracy, lesson.min_wpm, isCompletedHandled]);
 
   const handleReset = () => {
     setPrevInputLength(0);
     setPrevErrors(0);
     setShowResults(false);
+    setIsCompletedHandled(false);
     setIsStarted(false);
     reset();
   };
@@ -96,7 +100,17 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
   
   const passedAccuracy = lesson.min_accuracy ? stats.accuracy >= lesson.min_accuracy : true;
   const passedWpm = lesson.min_wpm ? stats.wpm >= lesson.min_wpm : true;
-  const hasPassed = passedAccuracy && passedWpm;
+  const passedDuration = lesson.max_duration_seconds ? stats.duration_seconds <= lesson.max_duration_seconds : true;
+  const hasPassed = passedAccuracy && passedWpm && passedDuration;
+  const isFreeExercise = !lesson.min_accuracy && !lesson.min_wpm && !lesson.max_duration_seconds;
+
+  const formatTime = (seconds: number) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    const paddedSec = sec.toString().padStart(2, '0');
+    if (min === 0) return `${paddedSec} segundos`;
+    return `${min} ${min === 1 ? 'minuto' : 'minutos'} e ${paddedSec} segundos`;
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 w-full max-w-[1400px] mx-auto p-4 md:p-8 min-h-[calc(100vh-80px)]">
@@ -119,7 +133,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 <LayoutGrid className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-black text-zinc-900 dark:text-white text-lg leading-tight">{lesson.title}</h3>
+                <h3 className="font-bold text-zinc-900 dark:text-white text-lg leading-tight">{lesson.title}</h3>
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Módulo Atual</span>
               </div>
             </div>
@@ -149,7 +163,19 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
             </button>
           </div>
 
-          <div className="mt-auto pt-2 space-y-2">
+          <div className="mt-auto pt-2 space-y-3">
+            {settings.showTimer && (
+              <div className="px-4 py-4 bg-rose-50/30 dark:bg-rose-500/5 rounded-2xl border-2 border-rose-100/50 dark:border-rose-900/20 flex flex-col items-center justify-center shadow-inner">
+                <span className="text-base font-extrabold text-rose-500 uppercase tracking-tight mb-1">Tempo de Prova</span>
+                <div className="flex items-center gap-3">
+                  <Clock className={`w-5 h-5 ${isStarted && stats.startTime && !stats.endTime ? 'text-rose-500 animate-pulse' : 'text-zinc-300'}`} />
+                  <span className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
+                    {formatTime(stats.duration_seconds)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <button 
               onClick={handleReset}
               className="w-full py-3.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold text-base rounded-xl transition-all flex items-center justify-center gap-3 border-2 border-emerald-200/50 dark:border-emerald-500/30"
@@ -184,7 +210,10 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 autoFocus
-                onClick={() => setIsStarted(true)}
+                onClick={() => {
+                   setIsStarted(true);
+                   startTimer();
+                 }}
                 className="px-10 py-5 bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-500/50 outline-none text-white font-black text-xl rounded-[24px] shadow-xl shadow-emerald-500/30 transition-all flex items-center gap-4 z-10"
               >
                 <div className="p-2 bg-white/20 rounded-xl shadow-inner">
@@ -258,16 +287,25 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 </>
               )}
               
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedAccuracy && lesson.min_accuracy ? 'ring-2 ring-rose-500/50' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-4 md:p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedAccuracy && lesson.min_accuracy ? 'ring-2 ring-rose-500/50 shadow-lg shadow-rose-500/10' : ''}`}>
                   <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Precisão</span>
-                  <span className={`text-3xl font-black ${!passedAccuracy && lesson.min_accuracy ? 'text-rose-500' : 'text-emerald-500'}`}>{stats.accuracy}%</span>
-                  {lesson.min_accuracy && <span className="block text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_accuracy}%</span>}
+                  <span className={`text-2xl md:text-3xl font-black ${!passedAccuracy && lesson.min_accuracy ? 'text-rose-500' : 'text-emerald-500'}`}>{stats.accuracy}%</span>
+                  {lesson.min_accuracy && <span className="block text-[8px] md:text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_accuracy}%</span>}
                 </div>
-                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedWpm && lesson.min_wpm ? 'ring-2 ring-rose-500/50' : ''}`}>
+                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-4 md:p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedDuration && lesson.max_duration_seconds ? 'ring-2 ring-rose-500/50 shadow-lg shadow-rose-500/10' : ''}`}>
+                  <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1 text-center">Tempo</span>
+                  <span className={`text-2xl md:text-3xl font-black ${!passedDuration && lesson.max_duration_seconds ? 'text-rose-500' : 'text-zinc-600 dark:text-zinc-300'}`}>{stats.duration_seconds} <span className="text-xs md:text-sm">seg</span></span>
+                  {lesson.max_duration_seconds ? (
+                    <span className="block text-[8px] md:text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: Max {lesson.max_duration_seconds}s</span>
+                  ) : (
+                    <span className="block text-[8px] md:text-[9px] font-bold text-zinc-400 mt-1 uppercase">Geral</span>
+                  )}
+                </div>
+                <div className={`bg-zinc-50 dark:bg-zinc-800/50 p-4 md:p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 ${!passedWpm && lesson.min_wpm ? 'ring-2 ring-rose-500/50 shadow-lg shadow-rose-500/10' : ''}`}>
                   <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Velocidade</span>
-                  <span className={`text-3xl font-black ${!passedWpm && lesson.min_wpm ? 'text-rose-500' : 'text-blue-500'}`}>{stats.wpm} <span className="text-sm">PPM</span></span>
-                  {lesson.min_wpm && <span className="block text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_wpm} PPM</span>}
+                  <span className={`text-2xl md:text-3xl font-black ${!passedWpm && lesson.min_wpm ? 'text-rose-500' : 'text-blue-500'}`}>{stats.wpm} <span className="text-xs md:text-sm">PPM</span></span>
+                  {lesson.min_wpm && <span className="block text-[8px] md:text-[9px] font-bold text-zinc-400 mt-1 uppercase">Meta: {lesson.min_wpm} PPM</span>}
                 </div>
               </div>
 
@@ -354,16 +392,26 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                     </div>
                   </div>
                 )}
-                {(lesson.min_accuracy || lesson.min_wpm) && (
+                {(lesson.min_accuracy || lesson.min_wpm || lesson.max_duration_seconds) ? (
                   <div className="p-4 bg-zinc-50 dark:bg-zinc-800/80 rounded-[24px] border border-zinc-200 dark:border-zinc-700 flex items-center gap-4 shadow-sm">
                     <div className="shrink-0 p-2.5 bg-white dark:bg-zinc-700 rounded-xl shadow-sm"><Trophy className="w-5 h-5 text-emerald-500" /></div>
                     <div>
                       <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Meta para passar</h4>
-                      <p className="text-base font-black text-zinc-900 dark:text-white flex items-baseline gap-2">
-                        {lesson.min_accuracy && <span><span className="text-emerald-500">{lesson.min_accuracy}%</span> acerto</span>}
-                        {lesson.min_accuracy && lesson.min_wpm && <span className="opacity-20 mx-1">|</span>}
-                        {lesson.min_wpm && <span><span className="text-blue-500">{lesson.min_wpm}</span> PPM</span>}
-                      </p>
+                      <div className="text-sm font-black text-zinc-900 dark:text-white flex flex-wrap items-center gap-2">
+                        {lesson.min_accuracy && <span className="whitespace-nowrap"><span className="text-emerald-500">{lesson.min_accuracy}%</span> acerto</span>}
+                        {lesson.min_accuracy && (lesson.min_wpm || lesson.max_duration_seconds) && <span className="opacity-20">|</span>}
+                        {lesson.max_duration_seconds && <span className="whitespace-nowrap">Máx <span className="text-amber-500">{lesson.max_duration_seconds}s</span></span>}
+                        {lesson.max_duration_seconds && lesson.min_wpm && <span className="opacity-20">|</span>}
+                        {lesson.min_wpm && <span className="whitespace-nowrap"><span className="text-blue-500">{lesson.min_wpm}</span> PPM</span>}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-emerald-500/5 rounded-[24px] border border-emerald-500/20 flex items-center gap-4 shadow-sm">
+                    <div className="shrink-0 p-2.5 bg-white dark:bg-emerald-500/20 rounded-xl shadow-sm"><Play className="w-5 h-5 text-emerald-500" /></div>
+                    <div>
+                      <h4 className="text-[9px] font-black uppercase tracking-widest text-emerald-600 mb-1">Exercício Livre</h4>
+                      <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400">Nenhuma meta obrigatória. Pratique à vontade!</p>
                     </div>
                   </div>
                 )}

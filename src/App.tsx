@@ -5,7 +5,7 @@ import { Dashboard } from './views/Dashboard';
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
 import { Module, Lesson, Profile, Plan, Course } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play } from 'lucide-react';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
@@ -179,6 +179,24 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUp
                     <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">Mostrar Tempo de Prova</p>
+                          <p className="text-[10px] text-zinc-400">Exibir cronômetro durante a lição</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => updateSettings({ showTimer: !settings.showTimer })}
+                        className={`w-12 h-6 rounded-full transition-all relative ${settings.showTimer ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-md ${settings.showTimer ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white dark:bg-zinc-800 rounded-lg shadow-sm text-zinc-400">
                           <Monitor className="w-5 h-5" />
                         </div>
                         <div>
@@ -319,7 +337,8 @@ const AppContent: React.FC = () => {
         user_id: user.id, 
         lesson_id: currentLesson.id, 
         wpm: stats.wpm, 
-        accuracy: stats.accuracy 
+        accuracy: stats.accuracy,
+        duration_seconds: stats.duration_seconds
       };
       
       const { error } = await supabase.from('progress').upsert([newProgress], { onConflict: 'user_id,lesson_id' });
