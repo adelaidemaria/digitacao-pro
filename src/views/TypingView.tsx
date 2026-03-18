@@ -16,21 +16,50 @@ interface TypingViewProps {
   hasNextLesson?: boolean;
   onOpenCourses: () => void;
   onOpenSettings: () => void;
+  progress: any[];
+  onExit: () => void;
 }
 
-export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses, onOpenSettings }) => {
+export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onComplete, onBack, hasNextLesson, onOpenCourses, onOpenSettings, progress, onExit }) => {
   const { settings } = useSettings();
   const [isStarted, setIsStarted] = useState(false);
-  const { input, stats, reset, startTimer } = useTypingEngine(lesson.content, settings, !isStarted);
-  const { playSuccess, playError } = useSound();
+  const [showIntro, setShowIntro] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isCompletedHandled, setIsCompletedHandled] = useState(false);
-  const [showIntro, setShowIntro] = useState(false);
   
   const [prevInputLength, setPrevInputLength] = useState(0);
   const [prevErrors, setPrevErrors] = useState(0);
+  const [confirmRedoNext, setConfirmRedoNext] = useState<Lesson | null>(null);
+  
+  const [showCustomPrompt, setShowCustomPrompt] = useState(lesson.is_custom_text || false);
+  const [customWord, setCustomWord] = useState('');
+  const [finalContent, setFinalContent] = useState(lesson.content);
 
-  const hasNumbers = /\d/.test(lesson.content);
+  const { input, stats, reset, startTimer } = useTypingEngine(finalContent, settings, !isStarted);
+
+  useEffect(() => {
+    setFinalContent(lesson.content);
+    setShowCustomPrompt(!!lesson.is_custom_text);
+    setCustomWord('');
+  }, [lesson]);
+
+  const handleCustomSubmit = () => {
+    if (!customWord.trim()) return;
+    const word = customWord.trim();
+    let newContent = '';
+    if (lesson.content && lesson.content.includes('{{TEXTO}}')) {
+      newContent = lesson.content.replace(/\{\{TEXTO\}\}/g, word);
+    } else if (lesson.content && lesson.content.trim().length > 0) {
+      newContent = lesson.content + ' ' + word;
+    } else {
+      newContent = Array(10).fill(word).join(' ');
+    }
+    setFinalContent(newContent);
+    setShowCustomPrompt(false);
+  };
+
+  const { playSuccess, playError } = useSound();
+  const hasNumbers = /\d/.test(finalContent);
   const showNumeric = settings.showNumeric || hasNumbers;
 
   // Find next lessons
@@ -76,12 +105,16 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
     setShowResults(false);
     setIsCompletedHandled(false);
     setIsStarted(false);
+    if (lesson.is_custom_text) {
+      setShowCustomPrompt(true);
+      setCustomWord('');
+    }
     reset();
   };
 
   const handleBack = () => {
     if (showResults) {
-      onComplete(stats, 'dashboard');
+      onExit();
     } else {
       onBack();
     }
@@ -96,7 +129,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
     }
   }, [lesson.id, lesson.objective, lesson.instruction, settings.showInstructions]);
 
-  const targetChar = lesson.content[input.length] || '';
+  const targetChar = finalContent[input.length] || '';
   
   const passedAccuracy = lesson.min_accuracy ? stats.accuracy >= lesson.min_accuracy : true;
   const passedWpm = lesson.min_wpm ? stats.wpm >= lesson.min_wpm : true;
@@ -133,7 +166,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 <LayoutGrid className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-zinc-900 dark:text-white text-lg leading-tight">{lesson.title}</h3>
+                <h3 className="font-black text-emerald-500 uppercase text-lg leading-tight tracking-tight">{lesson.title}</h3>
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Módulo Atual</span>
               </div>
             </div>
@@ -166,10 +199,10 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
           <div className="mt-auto pt-2 space-y-3">
             {settings.showTimer && (
               <div className="px-4 py-4 bg-rose-50/30 dark:bg-rose-500/5 rounded-2xl border-2 border-rose-100/50 dark:border-rose-900/20 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-base font-extrabold text-rose-500 uppercase tracking-tight mb-1">Tempo de Prova</span>
+                <span className="text-sm font-extrabold text-rose-500 uppercase tracking-tight mb-1">Tempo de Prova</span>
                 <div className="flex items-center gap-3">
                   <Clock className={`w-5 h-5 ${isStarted && stats.startTime && !stats.endTime ? 'text-rose-500 animate-pulse' : 'text-zinc-300'}`} />
-                  <span className="text-lg font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
+                  <span className="text-sm font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tight">
                     {formatTime(stats.duration_seconds)}
                   </span>
                 </div>
@@ -228,7 +261,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-wrap gap-[0.1em] font-mono leading-relaxed tracking-wide justify-center max-w-5xl w-full"
               >
-                {lesson.content.split('').map((char, i) => {
+                {finalContent.split('').map((char, i) => {
                   let color = 'text-zinc-200 dark:text-zinc-800';
                   let extraClasses = '';
                   if (i < input.length) color = 'text-zinc-800 dark:text-white opacity-20';
@@ -313,7 +346,14 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 {hasPassed && (
                   <button 
                     autoFocus
-                    onClick={() => onComplete(stats, 'next')}
+                    onClick={() => {
+                      const nextL = lessons[currentIndex + 1];
+                      if (nextL && progress.some(p => p.lesson_id === nextL.id)) {
+                        setConfirmRedoNext(nextL);
+                      } else {
+                        onComplete(stats, 'next');
+                      }
+                    }}
                     className="w-full bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-500/50 outline-none text-white font-black py-5 rounded-[20px] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 text-xl"
                   >
                     PRÓXIMA AULA <ArrowRight className="w-6 h-6" />
@@ -346,7 +386,7 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
           </motion.div>
         )}
 
-        {showIntro && (
+        {showIntro && !showCustomPrompt && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4"
@@ -428,6 +468,90 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
               </div>
             </motion.div>
           </motion.div>
+        )}
+
+        {showCustomPrompt && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[300] flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[48px] shadow-2xl max-w-xl w-full text-center border border-white/10 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 to-emerald-500" />
+              
+              <div className="w-20 h-20 bg-teal-50 dark:bg-teal-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-teal-50 dark:ring-teal-500/5">
+                <Target className="w-10 h-10 text-teal-500" />
+              </div>
+
+              <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight uppercase">Treino Flexível</h2>
+              <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 mb-8 max-w-md mx-auto">
+                Esta é uma lição de estilo livre. Escolha uma palavra, nome ou frase curta que você quer treinar agora:
+              </p>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleCustomSubmit(); }} className="space-y-6">
+                <input
+                  type="text"
+                  autoFocus
+                  required
+                  value={customWord}
+                  onChange={(e) => setCustomWord(e.target.value)}
+                  placeholder="EX: NOME OU EMPRESA"
+                  className="w-full p-6 text-center text-xl font-black bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-200 dark:border-zinc-700 focus:border-teal-500 rounded-[24px] outline-none transition-all uppercase placeholder:text-zinc-300 dark:placeholder:text-zinc-600 shadow-inner text-zinc-800 dark:text-white"
+                />
+                
+                <button 
+                  type="submit"
+                  disabled={!customWord.trim()}
+                  className="w-full py-6 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:hover:bg-teal-500 text-white font-black rounded-3xl transition-all flex items-center justify-center gap-3 shadow-xl tracking-[0.2em] uppercase text-sm"
+                >
+                  GERAR TREINO <Play className="w-4 h-4 fill-white" />
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {confirmRedoNext && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[500] flex items-center justify-center p-4 text-center">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col p-8"
+            >
+              <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-emerald-50 dark:ring-emerald-500/5">
+                <RotateCcw className="w-10 h-10 text-emerald-500" />
+              </div>
+              
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-2 uppercase tracking-tight">Próxima Aula Concluída!</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-bold mb-8 leading-relaxed lowercase">
+                A próxima aula <span className="text-emerald-500 uppercase">"{confirmRedoNext.title}"</span> já foi concluída com sucesso. Deseja praticá-la novamente mesmo assim?
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    onComplete(stats, 'next');
+                    setConfirmRedoNext(null);
+                  }}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-widest text-xs"
+                >
+                  Sim, Praticar de Novo
+                </button>
+                <button 
+                  onClick={() => {
+                    setConfirmRedoNext(null);
+                    onExit();
+                  }}
+                  className="w-full py-4 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-black rounded-2xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all uppercase tracking-widest text-xs"
+                >
+                  Não, Voltar
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

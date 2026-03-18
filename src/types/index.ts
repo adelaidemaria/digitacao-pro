@@ -31,6 +31,7 @@ export interface Lesson {
   min_accuracy?: number;
   min_wpm?: number;
   max_duration_seconds?: number;
+  is_custom_text?: boolean;
 }
 
 export interface Plan {
@@ -88,5 +89,16 @@ export interface Course {
   active: boolean;
   clicks: number;
   order: number;
+  created_at?: string;
+}
+
+export interface Tip {
+  id: string;
+  title: string;
+  content: string;
+  target_plans: string[];
+  active: boolean;
+  accent_color: string;
+  icon?: string;
   created_at?: string;
 }

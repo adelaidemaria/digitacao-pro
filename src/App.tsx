@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { Login } from './views/Login';
 import { Dashboard } from './views/Dashboard';
+import { Home } from './views/Home';
+
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
-import { Module, Lesson, Profile, Plan, Course } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock } from 'lucide-react';
+import { Module, Lesson, Profile, Plan, Course, Tip } from './types';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
@@ -223,7 +225,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUp
 };
 
 const AppContent: React.FC = () => {
-  const [view, setView] = useState<'login' | 'dashboard' | 'admin' | 'typing'>('login');
+  const [view, setView] = useState<'login' | 'dashboard' | 'admin' | 'typing' | 'home'>('login');
+
   const [user, setUser] = useState<Profile | null>(null);
   
   // Dynamic State for Content, Users and Plans
@@ -233,6 +236,7 @@ const AppContent: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [tips, setTips] = useState<Tip[]>([]);
   
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<any[]>([]);
@@ -269,17 +273,19 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [modulesRes, lessonsRes, announcementsRes, coursesRes] = await Promise.all([
+        const [modulesRes, lessonsRes, announcementsRes, coursesRes, tipsRes] = await Promise.all([
           supabase.from('modules').select('*').order('order'),
           supabase.from('lessons').select('*').order('order'),
           supabase.from('announcements').select('*').order('created_at', { ascending: false }),
-          supabase.from('courses').select('*').order('order')
+          supabase.from('courses').select('*').order('order'),
+          supabase.from('tips').select('*').order('created_at', { ascending: false })
         ]);
 
         if (modulesRes.data) setModules(modulesRes.data);
         if (lessonsRes.data) setLessons(lessonsRes.data);
         if (announcementsRes.data) setAnnouncements(announcementsRes.data);
         if (coursesRes.data) setCourses(coursesRes.data);
+        if (tipsRes.data) setTips(tipsRes.data as Tip[]);
         
         await fetchPlans();
       } catch (err) {
@@ -323,8 +329,13 @@ const AppContent: React.FC = () => {
       setUser(data || { id: mockId, full_name: 'Usuário', role, active: true, created_at: new Date().toISOString() });
     }
     
-    setView(role === 'admin' ? 'admin' : 'dashboard');
+    if (role === 'admin') {
+      setView('admin');
+    } else {
+      setView('home');
+    }
   };
+
 
   const handleStartLesson = (lesson: Lesson) => {
     setCurrentLesson(lesson);
@@ -527,6 +538,22 @@ const AppContent: React.FC = () => {
       if (!error) {
         setCourses(prev => prev.map(c => c.id === id ? { ...c, clicks: newClicks } : c));
       }
+    },
+
+    // Tips
+    saveTip: async (tipData: Tip) => {
+      const payload = { ...tipData };
+      if (!payload.id) delete (payload as any).id;
+
+      const { error } = await supabase.from('tips').upsert(payload);
+      if (!error) {
+        const { data } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
+        if (data) setTips(data as Tip[]);
+      }
+    },
+    deleteTip: async (id: string) => {
+      const { error } = await supabase.from('tips').delete().eq('id', id);
+      if (!error) setTips(prev => prev.filter(t => t.id !== id));
     }
   };
 
@@ -561,8 +588,28 @@ const AppContent: React.FC = () => {
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
           onCourseClick={adminHandlers.incrementCourseClick}
           onOpenCourses={() => setIsCoursesOpen(true)}
+          onGoToHome={() => setView('home')}
         />
       )}
+
+      {view === 'home' && user && (
+        <Home 
+          user={user}
+          modules={modules}
+          lessons={lessons}
+          plans={plans}
+          progress={progress}
+          tips={tips}
+          onLogout={() => setView('login')}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenCourses={() => setIsCoursesOpen(true)}
+          onGoToLessons={() => setView('dashboard')}
+          announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
+          onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
+        />
+      )}
+
 
       {view === 'admin' && user && (
         <AdminPanel 
@@ -573,6 +620,7 @@ const AppContent: React.FC = () => {
           plans={plans}
           announcements={announcements}
           courses={courses}
+          tips={tips}
           onLogout={() => setView('login')}
           handlers={adminHandlers as any}
         />
@@ -587,6 +635,8 @@ const AppContent: React.FC = () => {
           onOpenCourses={() => setIsCoursesOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           hasNextLesson={lessons.findIndex(l => l.id === currentLesson.id) < lessons.length - 1}
+          progress={progress}
+          onExit={() => { setView('dashboard'); setCurrentLesson(null); }}
         />
       )}
 

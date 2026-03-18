@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone, Video } from 'lucide-react';
+import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone, Video, Home as HomeIcon } from 'lucide-react';
 import { Module, Lesson, Plan, Announcement, Course } from '../types';
 
 interface DashboardProps {
@@ -18,13 +18,15 @@ interface DashboardProps {
   onAnnouncementClick?: (id: string) => void;
   onCourseClick?: (id: string) => void;
   onOpenCourses: () => void;
+  onGoToHome?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, modules, lessons, plans, courses, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick, onCourseClick, onOpenCourses 
+  user, modules, lessons, plans, courses, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick, onCourseClick, onOpenCourses, onGoToHome 
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
+  const [redoLesson, setRedoLesson] = useState<Lesson | null>(null);
   const userPlan = plans.find(p => p.id === user.plan_id);
   const accessibleModuleIds = userPlan?.accessible_modules || [];
   
@@ -104,6 +106,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <nav className="space-y-1 mb-6">
+            <button 
+              onClick={onGoToHome}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <HomeIcon className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">INÍCIO</span>
+            </button>
             <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
               <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">AULAS</span>
             </button>
@@ -341,7 +349,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                               <motion.tr
                                 key={lesson.id}
                                 whileHover={!isLocked ? { scale: 1.002, y: -1 } : {}}
-                                onClick={() => !isLocked && onStartLesson(lesson)}
+                                onClick={() => {
+                                  if (isLocked) return;
+                                  const status = getLessonStatus(lesson.id);
+                                  if (status) {
+                                    setRedoLesson(lesson);
+                                  } else {
+                                    onStartLesson(lesson);
+                                  }
+                                }}
                                 className={`group cursor-pointer transition-all ${
                                   isLocked ? 'opacity-50' : ''
                                 }`}
@@ -464,7 +480,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            onStartLesson(lesson);
+                                            setRedoLesson(lesson);
                                           }}
                                           className="hidden md:flex text-[10px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-[0.2em] items-center gap-1.5 group/btn"
                                         >
@@ -654,6 +670,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 shrink-0 flex justify-center">
                 <button onClick={() => setIsPlanDetailsOpen(false)} className="text-zinc-400 font-black text-xs uppercase tracking-[0.2em] hover:text-zinc-600 transition-colors">Fechar Detalhes</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Redo Confirmation Modal */}
+      <AnimatePresence>
+        {redoLesson && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col p-8 text-center"
+            >
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-blue-50 dark:ring-blue-500/5">
+                <RotateCcw className="w-10 h-10 text-blue-500" />
+              </div>
+              
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-2 uppercase tracking-tight">Refazer Aula?</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-bold mb-8 leading-relaxed lowercase">
+                Você já concluiu esta lição. Tem certeza que deseja praticar novamente a aula <span className="text-blue-500 uppercase">"{redoLesson.title}"</span>?
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    onStartLesson(redoLesson);
+                    setRedoLesson(null);
+                  }}
+                  className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
+                >
+                  Sim, Refazer Agora
+                </button>
+                <button 
+                  onClick={() => setRedoLesson(null)}
+                  className="w-full py-4 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 font-black rounded-2xl hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all uppercase tracking-widest text-xs"
+                >
+                  Não, Voltar
+                </button>
               </div>
             </motion.div>
           </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge, Video } from 'lucide-react';
-import { Module, Lesson, Profile, Plan, Announcement, Course } from '../types';
+import { Module, Lesson, Profile, Plan, Announcement, Course, Tip } from '../types';
+import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge, Video, Lightbulb } from 'lucide-react';
 
 interface AdminPanelProps {
   user: Profile;
@@ -11,6 +11,7 @@ interface AdminPanelProps {
   plans: Plan[];
   announcements: Announcement[];
   courses: Course[];
+  tips: Tip[];
   onLogout: () => void;
   handlers: {
     saveUser: (user: Profile, password?: string) => void;
@@ -25,11 +26,13 @@ interface AdminPanelProps {
     deleteAnnouncement: (id: string) => void;
     saveCourse: (course: Course) => void;
     deleteCourse: (id: string) => void;
+    saveTip: (tip: Tip) => void;
+    deleteTip: (id: string) => void;
   };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], onLogout, handlers }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements' | 'courses'>('dashboard');
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], tips = [], onLogout, handlers }) => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements' | 'courses' | 'tips'>('dashboard');
   
   // Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -44,6 +47,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   
   // Editing States
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -52,9 +56,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editingTip, setEditingTip] = useState<Tip | null>(null);
 
   // Delete confirmation state
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course', title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course' | 'tip', title: string } | null>(null);
   
   // Success feedback state
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -67,12 +72,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setIsPlanModalOpen(false);
     setIsAnnouncementModalOpen(false);
     setIsCourseModalOpen(false);
+    setIsTipModalOpen(false);
     setEditingUser(null);
     setEditingModule(null);
     setEditingLesson(null);
     setEditingPlan(null);
     setEditingAnnouncement(null);
     setEditingCourse(null);
+    setEditingTip(null);
     setConfirmDelete(null);
   };
 
@@ -98,6 +105,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     if (confirmDelete.type === 'plan') handlers.deletePlan(confirmDelete.id);
     if (confirmDelete.type === 'announcement') handlers.deleteAnnouncement(confirmDelete.id);
     if (confirmDelete.type === 'course') handlers.deleteCourse(confirmDelete.id);
+    if (confirmDelete.type === 'tip') handlers.deleteTip(confirmDelete.id);
     
     setConfirmDelete(null);
   };
@@ -153,6 +161,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
             >
               <Video className="w-5 h-5 flex-shrink-0" /> Cursos
             </button>
+            <button 
+              onClick={() => setActiveTab('tips')}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'tips' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+            >
+              <Lightbulb className="w-5 h-5 flex-shrink-0" /> Dicas de Mestre
+            </button>
           </nav>
 
           <div className="pt-8 border-t border-zinc-100 dark:border-zinc-800 space-y-4 mt-6">
@@ -189,7 +203,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight line-clamp-1 uppercase">
-              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : activeTab === 'courses' ? 'Gestão de Cursos' : 'Mensagens em Destaque'}
+              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : activeTab === 'courses' ? 'Gestão de Cursos' : activeTab === 'tips' ? 'Dicas de Mestre' : 'Mensagens em Destaque'}
             </h1>
             <p className="text-zinc-500 text-lg">
               {activeTab === 'dashboard' ? 'Bem-vindo de volta! Aqui está o resumo da sua plataforma.' : 'Administre e organize sua plataforma de ensino.'}
@@ -203,10 +217,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 if (activeTab === 'plans') setIsPlanModalOpen(true);
                 if (activeTab === 'announcements') setIsAnnouncementModalOpen(true);
                 if (activeTab === 'courses') setIsCourseModalOpen(true);
+                if (activeTab === 'tips') setIsTipModalOpen(true);
               }}
               className="flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap"
             >
-              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : activeTab === 'courses' ? 'Novo Curso' : 'Nova Mensagem'}
+              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : activeTab === 'courses' ? 'Novo Curso' : activeTab === 'tips' ? 'Nova Dica' : 'Nova Mensagem'}
             </button>
           )}
         </header>
@@ -472,7 +487,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                                  <td className="px-4 md:px-6 py-5">
                                    <div className="flex flex-col min-w-0">
                                      <span className="font-black text-zinc-700 dark:text-zinc-200 truncate">{lesson.title}</span>
-                                     <span className="text-xs font-mono text-zinc-400 truncate max-w-[300px] leading-tight mt-1">{lesson.content.substring(0, 100)}...</span>
+                                     <span className="text-xs font-mono text-zinc-400 truncate max-w-[300px] leading-tight mt-1">{lesson.is_custom_text ? '(Aula Livre)' : lesson.content.substring(0, 100) + '...'}</span>
                                    </div>
                                  </td>
                                  <td className="px-4 md:px-6 py-5">
@@ -762,6 +777,87 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               </div>
             </div>
           )}
+
+          {activeTab === 'tips' && (
+            <div className="flex flex-col">
+              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-amber-500" /> Dicas de Mestre Cadastradas
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[900px]">
+                  <thead>
+                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-20 text-center">Ícone</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Título da Dica</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público Alvo</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
+                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {tips.map(tip => (
+                      <tr key={tip.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                         <td className="px-4 md:px-6 py-8 text-center text-3xl">{tip.icon || '💡'}</td>
+                         <td className="px-4 md:px-6 py-8">
+                           <div className="flex flex-col">
+                             <span className={`font-black uppercase tracking-tight text-lg mb-1 leading-snug line-clamp-1 ${tip.accent_color}`}>{tip.title}</span>
+                             <span className="text-xs text-zinc-500 font-bold max-w-[400px] line-clamp-2">{tip.content}</span>
+                           </div>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-center">
+                          <div className="flex flex-wrap justify-center gap-1">
+                            {tip.target_plans?.length > 0 ? (
+                              tip.target_plans.map(pId => {
+                                const plan = plans.find(p => p.id === pId);
+                                return (
+                                  <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
+                                    {plan?.name || '---'}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md border border-emerald-100">Todos os Planos</span>
+                            )}
+                          </div>
+                        </td>
+                         <td className="px-4 md:px-6 py-8 text-center">
+                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${tip.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                             {tip.active ? 'Ativa' : 'Oculta'}
+                           </span>
+                         </td>
+                         <td className="px-4 md:px-6 py-8 text-right">
+                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                            <button 
+                              onClick={() => { setEditingTip(tip); setIsTipModalOpen(true); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                            >
+                              <Edit2 className="w-4 h-4" /> Alterar
+                            </button>
+                            <button 
+                              onClick={() => { setConfirmDelete({ id: tip.id, type: 'tip', title: tip.title }); }}
+                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                            >
+                              <Trash2 className="w-4 h-4" /> Excluir
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {tips.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUMA DICA CADASTRADA</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>
@@ -793,6 +889,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
 
       <Modal isOpen={isCourseModalOpen} onClose={resetModals} title={editingCourse ? 'Alterar Curso' : 'Novo Curso'} maxWidth="max-w-3xl">
         <CourseForm course={editingCourse} nextOrder={Math.max(0, ...courses.map(c => c.order || 0)) + 1} onSave={(data) => { handlers.saveCourse(data); onSaveComplete('Curso salvo com sucesso!'); }} />
+      </Modal>
+
+      <Modal isOpen={isTipModalOpen} onClose={resetModals} title={editingTip ? 'Alterar Dica de Mestre' : 'Nova Dica de Mestre'} maxWidth="max-w-2xl">
+        <TipForm plans={plans} tip={editingTip} onSave={(data) => { handlers.saveTip(data); onSaveComplete('Dica salva com sucesso!'); }} />
       </Modal>
 
       <AnimatePresence>
@@ -1002,6 +1102,8 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
   const [minAcc, setMinAcc] = useState<number | ''>(lesson?.min_accuracy ?? '');
   const [minWpm, setMinWpm] = useState<number | ''>(lesson?.min_wpm ?? '');
   const [maxDuration, setMaxDuration] = useState<number | ''>(lesson?.max_duration_seconds ?? '');
+  const [isExam, setIsExam] = useState(lesson?.id ? lesson.is_exam : true);
+  const [isCustomText, setIsCustomText] = useState(lesson?.is_custom_text ?? false);
 
   return (
     <div className="space-y-6">
@@ -1015,9 +1117,41 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
           <input type="number" value={order} onChange={e => setOrder(parseInt(e.target.value))} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all" />
         </div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <label className="flex items-center gap-4 py-4 px-6 bg-purple-50 dark:bg-purple-500/10 rounded-2xl border border-purple-100 dark:border-purple-500/20 cursor-pointer hover:bg-purple-100 transition-colors">
+          <button 
+            type="button"
+            onClick={(e) => { e.preventDefault(); setIsExam(!isExam); }} 
+            className={`w-14 h-8 rounded-full transition-all relative shrink-0 ${isExam ? 'bg-purple-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+          >
+            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${isExam ? 'left-7' : 'left-1'}`} />
+          </button>
+          <div className="flex flex-col">
+            <span className="font-black text-xs uppercase tracking-widest text-purple-600 dark:text-purple-400">Lição Completa (Prova)</span>
+            <span className="text-[9px] text-purple-500 font-bold uppercase tracking-tighter">Obriga precisão perfeita backspace restrito</span>
+          </div>
+        </label>
+        
+        <label className="flex items-center gap-4 py-4 px-6 bg-teal-50 dark:bg-teal-500/10 rounded-2xl border border-teal-100 dark:border-teal-500/20 cursor-pointer hover:bg-teal-100 transition-colors">
+          <button 
+            type="button"
+            onClick={(e) => { e.preventDefault(); setIsCustomText(!isCustomText); }} 
+            className={`w-14 h-8 rounded-full transition-all relative shrink-0 ${isCustomText ? 'bg-teal-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+          >
+            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${isCustomText ? 'left-7' : 'left-1'}`} />
+          </button>
+          <div className="flex flex-col flex-1">
+            <span className="font-black text-xs uppercase tracking-widest text-teal-600 dark:text-teal-400">Estilo Livre (Nome / Texto Livre)</span>
+            <span className="text-[9px] text-teal-500 font-bold uppercase tracking-tighter">Pede ao aluno o que ele quer digitar</span>
+          </div>
+        </label>
+      </div>
+
       <div className="space-y-2">
-        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Sequência de Digitação (Exercício)</label>
-        <textarea rows={4} value={content} onChange={e => setContent(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold font-mono outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans" placeholder="Ex: fj fj fjjf..." />
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">
+          {isCustomText ? "Molde / Template Opcional" : "Sequência de Digitação (Exercício)"}
+        </label>
+        <textarea rows={4} value={content} onChange={e => setContent(e.target.value)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold font-mono outline-none focus:border-blue-500 resize-none transition-all placeholder:font-sans" placeholder={isCustomText ? "Deixe em branco para o sistema apenas repetir as palavras, ou use {{TEXTO}} no meio de frases." : "Ex: fj fj fjjf..."} />
       </div>
       <div className="space-y-2">
         <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">🎯 Objetivo da Aula (Opcional)</label>
@@ -1051,7 +1185,7 @@ const LessonForm: React.FC<{ lesson: Lesson | null; nextOrder: number; onSave: (
           </button>
         ))}
       </div>
-      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order, objective, instruction, min_accuracy: minAcc === '' ? undefined : minAcc, min_wpm: minWpm === '' ? undefined : minWpm, max_duration_seconds: maxDuration === '' ? undefined : maxDuration })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
+      <button onClick={() => onSave({ id: lesson?.id || '', module_id: lesson!.module_id, title, content, difficulty: diff, order, objective, instruction, min_accuracy: minAcc === '' ? undefined : minAcc, min_wpm: minWpm === '' ? undefined : minWpm, max_duration_seconds: maxDuration === '' ? undefined : maxDuration, is_exam: isExam, is_custom_text: isCustomText })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR AULA</button>
     </div>
   );
 };
@@ -1424,6 +1558,106 @@ const CourseForm: React.FC<{ course: Course | null; nextOrder: number; onSave: (
       </div>
 
       <button onClick={() => onSave({ id: course?.id || '', title, description: desc, price, promotional_price: promPrice, payment_url: url, active, order, clicks: course?.clicks || 0 })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR CURSO</button>
+    </div>
+  );
+};
+
+const TipForm: React.FC<{ plans: Plan[]; tip: Tip | null; onSave: (t: Tip) => void }> = ({ plans, tip, onSave }) => {
+  const [title, setTitle] = useState(tip?.title || '');
+  const [content, setContent] = useState(tip?.content || '');
+  const [icon, setIcon] = useState(tip?.icon || '💡');
+  const [accentColor, setAccentColor] = useState(tip?.accent_color || 'text-blue-400');
+  const [active, setActive] = useState(tip?.active ?? true);
+  const [selectedPlans, setSelectedPlans] = useState<string[]>(tip?.target_plans || []);
+
+  const togglePlan = (id: string) => {
+    setSelectedPlans(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+  };
+
+  const colors = [
+    { label: 'Azul', value: 'text-blue-400', hex: '#60a5fa' },
+    { label: 'Roxo', value: 'text-violet-400', hex: '#a78bfa' },
+    { label: 'Verde', value: 'text-emerald-400', hex: '#34d399' },
+    { label: 'Âmbar', value: 'text-amber-400', hex: '#fbbf24' },
+    { label: 'Rosa', value: 'text-rose-400', hex: '#fb7185' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Emoji (Ícone)</label>
+          <input value={icon} onChange={e => setIcon(e.target.value)} placeholder="Ex: 🪑" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-center text-xl" maxLength={4} />
+        </div>
+        <div className="md:col-span-3 space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Título da Dica</label>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Mantenha a Postura" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Descrição</label>
+        <textarea rows={4} value={content} onChange={e => setContent(e.target.value)} placeholder="Descreva a dica com detalhes e foco em encorajar o aluno..." className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all resize-none text-sm leading-relaxed" />
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Cor de Destaque do Título</label>
+        <div className="flex flex-wrap gap-4">
+          {colors.map(col => (
+            <button
+              key={col.value}
+              onClick={() => setAccentColor(col.value)}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all border-4 ${accentColor === col.value ? 'border-zinc-900 dark:border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
+              style={{ backgroundColor: col.hex }}
+              title={col.label}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="p-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-500">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-zinc-800 dark:text-white block">Visível para Planos (Opcional)</label>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">Deixe sem selecionar nenhum para mostrar para TODOS (incluindo Módulo Gratuito)</span>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {plans.map(plan => (
+            <button
+              key={plan.id}
+              onClick={() => togglePlan(plan.id)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left ${selectedPlans.includes(plan.id) ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-500'}`}
+            >
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedPlans.includes(plan.id) ? 'border-white bg-white/20' : 'border-zinc-200 dark:border-zinc-700'}`}>
+                {selectedPlans.includes(plan.id) && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+              </div>
+              <span className="text-xs font-black uppercase tracking-tight truncate">{plan.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 py-6 px-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+        <button 
+          onClick={() => setActive(!active)} 
+          className={`w-14 h-8 rounded-full transition-all relative ${active ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+        >
+          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${active ? 'left-7' : 'left-1'}`} />
+        </button>
+        <div className="flex flex-col">
+          <span className="font-black text-[11px] uppercase tracking-widest text-zinc-800 dark:text-white">
+            {active ? 'DICA ATIVA NA PLATAFORMA' : 'DICA OCULTA'}
+          </span>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Somente dicas ativas são exibidas no sistema randômico.</span>
+        </div>
+      </div>
+
+      <button onClick={() => onSave({ id: tip?.id || '', title, content, icon, accent_color: accentColor, active, target_plans: selectedPlans })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR DICA</button>
     </div>
   );
 };
