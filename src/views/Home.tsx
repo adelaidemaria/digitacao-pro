@@ -87,6 +87,7 @@ export const Home: React.FC<HomeViewProps> = ({
   user, modules, lessons, plans, progress, tips = [], onLogout, onOpenSettings, onOpenProfile, onOpenCourses, onGoToLessons, announcement, onAnnouncementClick, homeVideos = [], homeConfig
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
 
   // Select a random active video once per mount
   const activeVideo = useMemo(() => {
@@ -282,7 +283,10 @@ export const Home: React.FC<HomeViewProps> = ({
               <p className="text-zinc-400 text-[9px] mb-4 font-bold uppercase tracking-wider">
                 {userPlan?.validity_days ? `${userPlan.validity_days} DIAS DE ACESSO` : 'ACESSO LIMITADO'}
               </p>
-              <button className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-black text-[9px] transition-all uppercase tracking-widest border border-white/10">
+              <button 
+                onClick={() => setIsPlanDetailsOpen(true)}
+                className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-black text-[9px] transition-all uppercase tracking-widest border border-white/10"
+              >
                 Ver detalhes
               </button>
             </div>
@@ -675,6 +679,101 @@ export const Home: React.FC<HomeViewProps> = ({
                 >
                   CONTINUAR JORNADA
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Plan Details Modal */}
+      <AnimatePresence>
+        {isPlanDetailsOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col max-h-[85vh] md:max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-800 dark:bg-zinc-800 text-white shrink-0">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Detalhes do Plano</h2>
+                  <p className="text-zinc-300 text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Configurações da sua conta</p>
+                </div>
+                <button onClick={() => setIsPlanDetailsOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+                  <X className="w-6 h-6 text-zinc-400" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6 overflow-y-auto scrollbar-hide">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-blue-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                    <Crown className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] block mb-1">Seu Plano Atual</span>
+                    <h3 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">{userPlan?.name || 'Gratuito'}</h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[28px] border border-zinc-100 dark:border-zinc-800">
+                    <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Validade</span>
+                    <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-black">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      {userPlan?.validity_days ? `${userPlan.validity_days} Dias` : 'Ilimitado'}
+                    </div>
+                  </div>
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-[28px] border border-zinc-100 dark:border-zinc-800">
+                    <span className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Módulos</span>
+                    <div className="flex items-center gap-2 text-zinc-900 dark:text-white font-black">
+                      <BookOpen className="w-4 h-4 text-blue-500" />
+                      {accessibleModuleIds.length} Liberados
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Módulos Acessíveis</span>
+                  <div className="flex flex-wrap gap-2">
+                    {accessibleModuleIds.map((mId, idx) => {
+                      const mod = modules.find(m => m.id === mId);
+                      return (
+                        <div key={mId} className="px-4 py-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border border-blue-100 dark:border-blue-500/20">
+                          {mod?.title || `Módulo ${idx + 1}`}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {!userPlan?.name.toLowerCase().includes('premium') && (
+                  <div className="p-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[32px] text-white shadow-lg shadow-amber-500/20">
+                    <h4 className="font-black text-lg mb-1 uppercase tracking-tight">Evolua seu Plano</h4>
+                    <p className="text-xs font-bold opacity-90 mb-4 leading-relaxed">Libere módulos avançados e ganhe certificado de conclusão exclusivo.</p>
+                    {nextPlan ? (
+                      <a 
+                        href={nextPlan.payment_url || '#'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block w-full py-3 bg-white text-amber-600 font-black rounded-xl text-xs uppercase tracking-widest hover:scale-[1.02] transition-all text-center"
+                      >
+                        Fazer Upgrade Agora
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={onOpenSettings}
+                        className="w-full py-3 bg-white text-amber-600 font-black rounded-xl text-xs uppercase tracking-widest hover:scale-[1.02] transition-all"
+                      >
+                        Conhecer Planos
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800 shrink-0 flex justify-center">
+                <button onClick={() => setIsPlanDetailsOpen(false)} className="text-zinc-400 font-black text-xs uppercase tracking-[0.2em] hover:text-zinc-600 transition-colors">Fechar Detalhes</button>
               </div>
             </motion.div>
           </div>
