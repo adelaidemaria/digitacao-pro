@@ -102,3 +102,23 @@ export interface Tip {
   icon?: string;
   created_at?: string;
 }
+
+export interface HomeVideo {
+  id: string;
+  title: string;
+  description: string;
+  video_url: string;
+  active: boolean;
+  created_at?: string;
+}
+
+export interface HomeConfig {
+  id: string | number;
+  layout_scheme: 'classic' | 'vibrant';
+  show_stats: boolean;
+  show_videos: boolean;
+  show_tips: boolean;
+  show_modules: boolean;
+  show_upgrade: boolean;
+  updated_at?: string;
+}

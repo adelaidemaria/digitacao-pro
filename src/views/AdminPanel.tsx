@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Module, Lesson, Profile, Plan, Announcement, Course, Tip } from '../types';
-import { Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, Trash, Bell, MousePointer2, Palette, Gauge, Video, Lightbulb } from 'lucide-react';
+import { Module, Lesson, Profile, Plan, Announcement, Course, Tip, HomeVideo, HomeConfig } from '../types';
+import { 
+  Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, 
+  Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, 
+  AlertCircle, LogOut, LayoutDashboard, TrendingUp, Megaphone, Activity, 
+  Trash, Bell, MousePointer2, Palette, Gauge, Video, Lightbulb, Settings, 
+  Home as HomeIcon, Eye, EyeOff, PlayCircle, Info, Check
+} from 'lucide-react';
 
 interface AdminPanelProps {
   user: Profile;
@@ -12,6 +18,8 @@ interface AdminPanelProps {
   announcements: Announcement[];
   courses: Course[];
   tips: Tip[];
+  homeVideos: HomeVideo[];
+  homeConfig: HomeConfig;
   onLogout: () => void;
   handlers: {
     saveUser: (user: Profile, password?: string) => void;
@@ -28,11 +36,15 @@ interface AdminPanelProps {
     deleteCourse: (id: string) => void;
     saveTip: (tip: Tip) => void;
     deleteTip: (id: string) => void;
+    saveHomeVideo: (video: HomeVideo) => void;
+    deleteHomeVideo: (id: string) => void;
+    updateHomeConfig: (config: Partial<HomeConfig>) => void;
   };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], tips = [], onLogout, handlers }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'announcements' | 'courses' | 'tips'>('dashboard');
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], tips = [], homeVideos = [], homeConfig, onLogout, handlers }) => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'tips' | 'settings'>('dashboard');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'announcements' | 'courses' | 'home' | 'tips'>('home');
   
   // Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -48,6 +60,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
+  const [isHomeVideoModalOpen, setIsHomeVideoModalOpen] = useState(false);
   
   // Editing States
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -57,9 +70,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingTip, setEditingTip] = useState<Tip | null>(null);
+  const [editingHomeVideo, setEditingHomeVideo] = useState<HomeVideo | null>(null);
 
   // Delete confirmation state
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course' | 'tip', title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course' | 'tip' | 'home_video', title: string } | null>(null);
   
   // Success feedback state
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -73,6 +87,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setIsAnnouncementModalOpen(false);
     setIsCourseModalOpen(false);
     setIsTipModalOpen(false);
+    setIsHomeVideoModalOpen(false);
     setEditingUser(null);
     setEditingModule(null);
     setEditingLesson(null);
@@ -80,6 +95,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setEditingAnnouncement(null);
     setEditingCourse(null);
     setEditingTip(null);
+    setEditingHomeVideo(null);
     setConfirmDelete(null);
   };
 
@@ -106,6 +122,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     if (confirmDelete.type === 'announcement') handlers.deleteAnnouncement(confirmDelete.id);
     if (confirmDelete.type === 'course') handlers.deleteCourse(confirmDelete.id);
     if (confirmDelete.type === 'tip') handlers.deleteTip(confirmDelete.id);
+    if (confirmDelete.type === 'home_video') handlers.deleteHomeVideo(confirmDelete.id);
     
     setConfirmDelete(null);
   };
@@ -150,22 +167,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
               <CreditCard className="w-5 h-5 flex-shrink-0" /> Planos
             </button>
             <button 
-              onClick={() => setActiveTab('announcements')}
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'announcements' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+              onClick={() => setActiveTab('settings')}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'settings' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
             >
-              <Megaphone className="w-5 h-5 flex-shrink-0" /> Mensagens
-            </button>
-            <button 
-              onClick={() => setActiveTab('courses')}
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'courses' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
-            >
-              <Video className="w-5 h-5 flex-shrink-0" /> Cursos
-            </button>
-            <button 
-              onClick={() => setActiveTab('tips')}
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all ${activeTab === 'tips' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-sm' : 'text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
-            >
-              <Lightbulb className="w-5 h-5 flex-shrink-0" /> Dicas de Mestre
+              <Settings className="w-5 h-5 flex-shrink-0" /> Configurações
             </button>
           </nav>
 
@@ -203,7 +208,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight line-clamp-1 uppercase">
-              {activeTab === 'dashboard' ? 'Dashboard Geral' : activeTab === 'users' ? 'Gestão de Alunos' : activeTab === 'content' ? 'Módulos e Aulas' : activeTab === 'plans' ? 'Planos de Acesso' : activeTab === 'courses' ? 'Gestão de Cursos' : activeTab === 'tips' ? 'Dicas de Mestre' : 'Mensagens em Destaque'}
+              {activeTab === 'dashboard' ? 'Dashboard Geral' : 
+               activeTab === 'users' ? 'Gestão de Alunos' : 
+               activeTab === 'content' ? 'Módulos e Aulas' : 
+                activeTab === 'plans' ? 'Planos de Acesso' : 
+                activeTab === 'settings' ? (
+                  activeSettingsTab === 'announcements' ? 'Mensagens em Destaque' :
+                  activeSettingsTab === 'courses' ? 'Gestão de Cursos' :
+                  activeSettingsTab === 'tips' ? 'Dicas de Mestre' :
+                  'Configurações da Home'
+                ) : 'Administração'}
             </h1>
             <p className="text-zinc-500 text-lg">
               {activeTab === 'dashboard' ? 'Bem-vindo de volta! Aqui está o resumo da sua plataforma.' : 'Administre e organize sua plataforma de ensino.'}
@@ -215,13 +229,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 if (activeTab === 'users') setIsUserModalOpen(true);
                 if (activeTab === 'content') setIsModuleModalOpen(true);
                 if (activeTab === 'plans') setIsPlanModalOpen(true);
-                if (activeTab === 'announcements') setIsAnnouncementModalOpen(true);
-                if (activeTab === 'courses') setIsCourseModalOpen(true);
-                if (activeTab === 'tips') setIsTipModalOpen(true);
+                if (activeTab === 'settings' && activeSettingsTab === 'announcements') setIsAnnouncementModalOpen(true);
+                if (activeTab === 'settings' && activeSettingsTab === 'courses') setIsCourseModalOpen(true);
+                if (activeTab === 'settings' && activeSettingsTab === 'tips') setIsTipModalOpen(true);
               }}
-              className="flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap"
+              className={`flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap ${activeTab === 'settings' && activeSettingsTab === 'home' ? 'hidden' : ''}`}
             >
-              <Plus className="w-6 h-6" /> {activeTab === 'users' ? 'Novo Aluno' : activeTab === 'content' ? 'Novo Módulo' : activeTab === 'plans' ? 'Novo Plano' : activeTab === 'courses' ? 'Novo Curso' : activeTab === 'tips' ? 'Nova Dica' : 'Nova Mensagem'}
+              <Plus className="w-6 h-6" /> {
+                activeTab === 'users' ? 'Novo Aluno' : 
+                activeTab === 'content' ? 'Novo Módulo' : 
+                activeTab === 'plans' ? 'Novo Plano' : 
+                activeTab === 'settings' ? (
+                  activeSettingsTab === 'announcements' ? 'Nova Mensagem' :
+                  activeSettingsTab === 'courses' ? 'Novo Curso' :
+                  activeSettingsTab === 'tips' ? 'Nova Dica' : ''
+                ) : 'Novo Item'
+              }
             </button>
           )}
         </header>
@@ -616,245 +639,453 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
             </div>
           )}
 
-          {activeTab === 'announcements' && (
-            <div className="flex flex-col">
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                    <Megaphone className="w-4 h-4 text-blue-500" /> Mensagens em Destaque (Scrolling)
-                  </span>
-                </div>
+          {activeTab === 'settings' && (
+            <div className="flex flex-col gap-8">
+              {/* Sub-navigation for Settings */}
+              <div className="flex flex-wrap p-1.5 bg-zinc-100 dark:bg-zinc-800/50 rounded-[28px] border border-zinc-200 dark:border-zinc-700 w-fit gap-1">
+                <button 
+                  onClick={() => setActiveSettingsTab('home')}
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${activeSettingsTab === 'home' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md shadow-black/5' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-white'}`}
+                >
+                  <HomeIcon className="w-4 h-4" /> Home
+                </button>
+                <button 
+                  onClick={() => setActiveSettingsTab('announcements')}
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${activeSettingsTab === 'announcements' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md shadow-black/5' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-white'}`}
+                >
+                  <Megaphone className="w-4 h-4" /> Mensagens
+                </button>
+                <button 
+                  onClick={() => setActiveSettingsTab('courses')}
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${activeSettingsTab === 'courses' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md shadow-black/5' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-white'}`}
+                >
+                  <Video className="w-4 h-4" /> Cursos
+                </button>
+                <button 
+                  onClick={() => setActiveSettingsTab('tips')}
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${activeSettingsTab === 'tips' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md shadow-black/5' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-white'}`}
+                >
+                  <Lightbulb className="w-4 h-4" /> Dicas
+                </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[900px]">
-                  <thead>
-                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Cliques</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {announcements.map(ann => (
-                      <tr key={ann.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
-                        <td className="px-6 md:px-10 py-8">
-                          <div className="flex flex-col">
-                            <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight">{ann.content}</span>
-                            <span className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Criado em {new Date(ann.created_at!).toLocaleDateString()}</span>
-                          </div>
-                        </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                           <div className="flex flex-col items-center">
-                             <span className="text-2xl font-black text-zinc-900 dark:text-white">{ann.clicks || 0}</span>
-                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cliques</span>
-                           </div>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ann.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
-                             {ann.active ? 'Ativo' : 'Inativo'}
-                           </span>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-center min-w-[180px]">
-                          <div className="flex flex-wrap justify-center gap-1">
-                            {ann.target_plans?.length > 0 ? (
-                              ann.target_plans.map(pId => {
-                                const plan = plans.find(p => p.id === pId);
-                                return (
-                                  <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
-                                    {plan?.name || '---'}
+              <div className="bg-white dark:bg-zinc-900 rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm overflow-hidden min-h-[400px]">
+                {activeSettingsTab === 'announcements' && (
+                  <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                          <Megaphone className="w-4 h-4 text-blue-500" /> Mensagens em Destaque (Scrolling)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                          <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Conteúdo da Mensagem</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Cliques</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px) font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {announcements.map(ann => (
+                            <tr key={ann.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                              <td className="px-6 md:px-10 py-8">
+                                <div className="flex flex-col">
+                                  <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight">{ann.content}</span>
+                                  <span className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Criado em {new Date(ann.created_at!).toLocaleDateString()}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-center">
+                                <div className="flex flex-col items-center">
+                                  <span className="text-2xl font-black text-zinc-900 dark:text-white">{ann.clicks || 0}</span>
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cliques</span>
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-center">
+                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${ann.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                                  {ann.active ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-center min-w-[180px]">
+                                <div className="flex flex-wrap justify-center gap-1">
+                                  {ann.target_plans?.length > 0 ? (
+                                    ann.target_plans.map(pId => {
+                                      const plan = plans.find(p => p.id === pId);
+                                      return (
+                                        <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
+                                          {plan?.name || '---'}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span className="text-[10px] font-black text-rose-500 uppercase">Nenhum plano</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-right">
+                                <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                                  <button 
+                                    onClick={() => { setEditingAnnouncement(ann); setIsAnnouncementModalOpen(true); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                                  >
+                                    <Edit2 className="w-4 h-4" /> Alterar
+                                  </button>
+                                  <button 
+                                    onClick={() => { setConfirmDelete({ id: ann.id, type: 'announcement', title: ann.content.substring(0, 20) + '...' }); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                                  >
+                                    <Trash2 className="w-4 h-4" /> Excluir
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {activeSettingsTab === 'courses' && (
+                  <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                          <Video className="w-4 h-4 text-blue-500" /> Cursos Disponíveis
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                          <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-16 text-center">Ordem</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[130px]">Valores</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[160px]">Status/Cliques</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {courses.sort((a, b) => (a.order || 0) - (b.order || 0)).map(course => (
+                            <tr key={course.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                              <td className="px-4 md:px-6 py-8 text-center text-lg font-black text-zinc-400">{course.order}</td>
+                              <td className="px-4 md:px-6 py-8">
+                                <div className="flex flex-col">
+                                  <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight line-clamp-2">{course.title}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-center">
+                                <div className="flex flex-col items-center gap-1">
+                                  {course.promotional_price ? (
+                                    <>
+                                      <span className="text-xs text-zinc-400 line-through font-bold">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                                      <span className="text-lg font-black text-emerald-500">R$ {course.promotional_price.toFixed(2).replace('.', ',')}</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-lg font-black text-blue-600">R$ {course.price.toFixed(2).replace('.', ',')}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-center">
+                                <div className="flex flex-col items-center gap-2">
+                                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${course.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                                    {course.active ? 'Ativo' : 'Inativo'}
                                   </span>
-                                );
-                              })
-                            ) : (
-                              <span className="text-[10px] font-black text-rose-500 uppercase">Nenhum plano</span>
-                            )}
-                          </div>
-                        </td>
-                         <td className="px-4 md:px-6 py-8 text-right">
-                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
-                            <button 
-                              onClick={() => { setEditingAnnouncement(ann); setIsAnnouncementModalOpen(true); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-4 h-4" /> Alterar
-                            </button>
-                            <button 
-                              onClick={() => { setConfirmDelete({ id: ann.id, type: 'announcement', title: ann.content.substring(0, 20) + '...' }); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
-                            >
-                              <Trash2 className="w-4 h-4" /> Excluir
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'courses' && (
-            <div className="flex flex-col">
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                    <Video className="w-4 h-4 text-blue-500" /> Cursos Disponíveis
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[900px]">
-                  <thead>
-                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-16 text-center">Ordem</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[130px]">Valores</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[160px]">Status/Cliques</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {courses.sort((a, b) => (a.order || 0) - (b.order || 0)).map(course => (
-                      <tr key={course.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
-                         <td className="px-4 md:px-6 py-8 text-center text-lg font-black text-zinc-400">{course.order}</td>
-                         <td className="px-4 md:px-6 py-8">
-                           <div className="flex flex-col">
-                             <span className="font-black text-zinc-900 dark:text-white text-lg leading-snug uppercase tracking-tight line-clamp-2">{course.title}</span>
-                           </div>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                           <div className="flex flex-col items-center gap-1">
-                             {course.promotional_price ? (
-                               <>
-                                 <span className="text-xs text-zinc-400 line-through font-bold">R$ {course.price.toFixed(2).replace('.', ',')}</span>
-                                 <span className="text-lg font-black text-emerald-500">R$ {course.promotional_price.toFixed(2).replace('.', ',')}</span>
-                               </>
-                             ) : (
-                               <span className="text-lg font-black text-blue-600">R$ {course.price.toFixed(2).replace('.', ',')}</span>
-                             )}
-                           </div>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                           <div className="flex flex-col items-center gap-2">
-                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${course.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
-                               {course.active ? 'Ativo' : 'Inativo'}
-                             </span>
-                             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">
-                               {course.clicks || 0} CLIQUES
-                             </span>
-                           </div>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-right">
-                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
-                            <button 
-                              onClick={() => { setEditingCourse(course); setIsCourseModalOpen(true); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-4 h-4" /> Alterar
-                            </button>
-                            <button 
-                              onClick={() => { setConfirmDelete({ id: course.id, type: 'course', title: course.title }); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
-                            >
-                              <Trash2 className="w-4 h-4" /> Excluir
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {courses.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUM CURSO CADASTRADO</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'tips' && (
-            <div className="flex flex-col">
-              <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-amber-500" /> Dicas de Mestre Cadastradas
-                  </span>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[900px]">
-                  <thead>
-                    <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-20 text-center">Ícone</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Título da Dica</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público Alvo</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
-                      <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {tips.map(tip => (
-                      <tr key={tip.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
-                         <td className="px-4 md:px-6 py-8 text-center text-3xl">{tip.icon || '💡'}</td>
-                         <td className="px-4 md:px-6 py-8">
-                           <div className="flex flex-col">
-                             <span className={`font-black uppercase tracking-tight text-lg mb-1 leading-snug line-clamp-1 ${tip.accent_color}`}>{tip.title}</span>
-                             <span className="text-xs text-zinc-500 font-bold max-w-[400px] line-clamp-2">{tip.content}</span>
-                           </div>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                          <div className="flex flex-wrap justify-center gap-1">
-                            {tip.target_plans?.length > 0 ? (
-                              tip.target_plans.map(pId => {
-                                const plan = plans.find(p => p.id === pId);
-                                return (
-                                  <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
-                                    {plan?.name || '---'}
+                                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-lg">
+                                    {course.clicks || 0} CLIQUES
                                   </span>
-                                );
-                              })
-                            ) : (
-                              <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md border border-emerald-100">Todos os Planos</span>
+                                </div>
+                              </td>
+                              <td className="px-4 md:px-6 py-8 text-right">
+                                <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                                  <button 
+                                    onClick={() => { setEditingCourse(course); setIsCourseModalOpen(true); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                                  >
+                                    <Edit2 className="w-4 h-4" /> Alterar
+                                  </button>
+                                  <button 
+                                    onClick={() => { setConfirmDelete({ id: course.id, type: 'course', title: course.title }); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                                  >
+                                    <Trash2 className="w-4 h-4" /> Excluir
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {courses.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUM CURSO CADASTRADO</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {activeSettingsTab === 'home' && (
+                  <div className="p-8 flex flex-col gap-12 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    
+                    {/* Theme Selection */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 border border-amber-100 dark:border-amber-500/20">
+                          <Palette className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Layout & Cores</h3>
+                          <p className="text-zinc-400 text-xs font-bold uppercase">Escolha a identidade visual do portal do aluno</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {(['classic', 'vibrant'] as const).map((scheme) => (
+                          <button
+                            key={scheme}
+                            onClick={() => handlers.updateHomeConfig({ layout_scheme: scheme })}
+                            className={`relative p-6 rounded-[32px] border-2 transition-all text-left group overflow-hidden ${
+                              homeConfig.layout_scheme === scheme 
+                                ? (scheme === 'classic' ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10' : 
+                                   'border-purple-500 bg-purple-50/50 dark:bg-purple-500/10')
+                                : 'border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-zinc-200 dark:hover:border-zinc-700'
+                            }`}
+                          >
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${
+                              scheme === 'classic' ? 'bg-blue-100 text-blue-600' :
+                              'bg-purple-100 text-purple-600'
+                            }`}>
+                              {scheme === 'classic' ? <LayoutDashboard className="w-6 h-6" /> :
+                               <TrendingUp className="w-6 h-6" />}
+                            </div>
+                            <h4 className={`font-black uppercase tracking-tight mb-1 ${scheme === 'classic' && homeConfig.layout_scheme === 'classic' ? 'text-zinc-900 dark:text-white' : scheme === 'vibrant' && homeConfig.layout_scheme === 'vibrant' ? 'text-zinc-900 dark:text-white' : 'text-zinc-900 dark:text-white'}`}>
+                              {scheme === 'classic' ? 'Classic Blue' : 'Vibrant Purple'}
+                            </h4>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase leading-tight">
+                              {scheme === 'classic' ? 'Visual limpo e profissional focado em produtividade.' : 
+                               'Cores vibrantes para uma experiência mais dinâmica e energética.'}
+                            </p>
+                            {homeConfig.layout_scheme === scheme && (
+                              <div className="absolute top-6 right-6 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                <Check className="w-4 h-4" />
+                              </div>
                             )}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Section Visibility */}
+                    <section>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-100 dark:border-emerald-500/20">
+                          <Eye className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Visibilidade das Seções</h3>
+                          <p className="text-zinc-400 text-xs font-bold uppercase">Escolha o que os alunos verão na página de início</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {[
+                          { key: 'show_stats', label: 'Estatísticas', icon: Activity },
+                          { key: 'show_videos', label: 'Vídeos de Início', icon: Video },
+                          { key: 'show_tips', label: 'Dicas de Mestre', icon: Lightbulb },
+                          { key: 'show_modules', label: 'Módulos', icon: BookOpen },
+                          { key: 'show_upgrade', label: 'Plano de Update', icon: TrendingUp },
+                        ].map((section) => (
+                          <button
+                            key={section.key}
+                            onClick={() => handlers.updateHomeConfig({ [section.key]: !homeConfig[section.key as keyof HomeConfig] })}
+                            className={`flex items-center justify-between p-5 rounded-[24px] border transition-all ${
+                              homeConfig[section.key as keyof HomeConfig]
+                                ? 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <section.icon className="w-5 h-5" />
+                              <span className="font-black text-[11px] uppercase tracking-widest">{section.label}</span>
+                            </div>
+                            {homeConfig[section.key as keyof HomeConfig] ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Instruction Videos Management */}
+                    <section>
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 border border-blue-100 dark:border-blue-500/20">
+                            <Video className="w-5 h-5" />
                           </div>
-                        </td>
-                         <td className="px-4 md:px-6 py-8 text-center">
-                           <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${tip.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
-                             {tip.active ? 'Ativa' : 'Oculta'}
-                           </span>
-                         </td>
-                         <td className="px-4 md:px-6 py-8 text-right">
-                          <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
-                            <button 
-                              onClick={() => { setEditingTip(tip); setIsTipModalOpen(true); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-4 h-4" /> Alterar
-                            </button>
-                            <button 
-                              onClick={() => { setConfirmDelete({ id: tip.id, type: 'tip', title: tip.title }); }}
-                              className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
-                            >
-                              <Trash2 className="w-4 h-4" /> Excluir
-                            </button>
+                          <div>
+                            <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Vídeos de Instrução</h3>
+                            <p className="text-zinc-400 text-xs font-bold uppercase">Gerencie os vídeos que aparecem nas Instruções de Início</p>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {tips.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUMA DICA CADASTRADA</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                        </div>
+                        <button 
+                          onClick={() => { setEditingHomeVideo(null); setIsHomeVideoModalOpen(true); }}
+                          className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.05]"
+                        >
+                          <Plus className="w-4 h-4" /> Adicionar Vídeo
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {homeVideos.map((video) => (
+                          <div 
+                            key={video.id} 
+                            className={`relative flex flex-col p-6 rounded-[32px] border transition-all bg-white dark:bg-zinc-900 shadow-sm group ${
+                              video.active ? 'border-zinc-200 dark:border-zinc-800' : 'opacity-60 border-zinc-100 dark:border-zinc-800/50'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${video.active ? 'bg-blue-50 text-blue-500 dark:bg-blue-500/10' : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800'}`}>
+                                  {video.active ? <PlayCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+                                </div>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${video.active ? 'text-blue-500' : 'text-zinc-400'}`}>
+                                  {video.active ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => { setEditingHomeVideo(video); setIsHomeVideoModalOpen(true); }}
+                                  className="w-8 h-8 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:bg-blue-500 hover:text-white transition-colors"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => setConfirmDelete({ id: video.id, type: 'lesson', title: video.title })} // Using lesson type as generic delete for now
+                                  className="w-8 h-8 rounded-lg bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 hover:bg-rose-500 hover:text-white transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                            <h4 className="font-black text-zinc-900 dark:text-white uppercase tracking-tight line-clamp-1 mb-1">{video.title}</h4>
+                            <p className="text-zinc-400 text-xs font-bold leading-relaxed line-clamp-2 mb-4">{video.description}</p>
+                            <div className="mt-auto pt-4 border-t border-zinc-50 dark:border-zinc-800/50 flex items-center justify-between">
+                              <span className="text-[9px] text-zinc-300 font-black uppercase tracking-tighter truncate max-w-[150px]">{video.video_url}</span>
+                              <button 
+                                onClick={() => handlers.saveHomeVideo({ ...video, active: !video.active })}
+                                className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${
+                                  video.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-zinc-50 text-zinc-400 border-zinc-100'
+                                }`}
+                              >
+                                {video.active ? 'Desativar' : 'Ativar'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {homeVideos.length === 0 && (
+                          <div className="col-span-full py-16 flex flex-col items-center justify-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-[40px]">
+                            <Video className="w-12 h-12 text-zinc-200 mb-4" />
+                            <p className="text-zinc-400 font-bold uppercase tracking-widest text-sm">Nenhum vídeo cadastrado</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-8 p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-[32px] border border-blue-100 dark:border-blue-900/20 flex items-start gap-4">
+                        <Info className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
+                        <div className="text-blue-700 dark:text-blue-400 text-sm">
+                          <p className="font-black uppercase tracking-tight mb-1">Dica de Alternância</p>
+                          <p className="font-bold opacity-80 leading-relaxed uppercase text-[10px]">Se houver mais de um vídeo <strong>Ativo</strong>, o sistema irá selecionar um aleatoriamente para cada aluno em cada acesso, garantindo variedade mas sempre mantendo o foco em um conteúdo por vez.</p>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                )}
+                 {activeSettingsTab === 'tips' && (
+                  <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4 text-amber-500" /> Dicas de Mestre Cadastradas
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                          <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest w-20 text-center">Ícone</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Título da Dica</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[200px]">Público Alvo</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[120px]">Status</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {tips.map(tip => (
+                            <tr key={tip.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                               <td className="px-4 md:px-6 py-8 text-center text-3xl">{tip.icon || '💡'}</td>
+                               <td className="px-4 md:px-6 py-8">
+                                 <div className="flex flex-col">
+                                   <span className={`font-black uppercase tracking-tight text-lg mb-1 leading-snug line-clamp-1 ${tip.accent_color}`}>{tip.title}</span>
+                                   <span className="text-xs text-zinc-500 font-bold max-w-[400px] line-clamp-2">{tip.content}</span>
+                                 </div>
+                               </td>
+                               <td className="px-4 md:px-6 py-8 text-center">
+                                <div className="flex flex-wrap justify-center gap-1">
+                                  {tip.target_plans?.length > 0 ? (
+                                    tip.target_plans.map(pId => {
+                                      const plan = plans.find(p => p.id === pId);
+                                      return (
+                                        <span key={pId} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded-md border border-blue-100 dark:border-blue-500/20">
+                                          {plan?.name || '---'}
+                                        </span>
+                                      );
+                                    })
+                                  ) : (
+                                    <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-0.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-md border border-emerald-100">Todos os Planos</span>
+                                  )}
+                                </div>
+                              </td>
+                               <td className="px-4 md:px-6 py-8 text-center">
+                                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${tip.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                                   {tip.active ? 'Ativa' : 'Oculta'}
+                                 </span>
+                               </td>
+                               <td className="px-4 md:px-6 py-8 text-right">
+                                <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                                  <button 
+                                    onClick={() => { setEditingTip(tip); setIsTipModalOpen(true); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                                  >
+                                    <Edit2 className="w-4 h-4" /> Alterar
+                                  </button>
+                                  <button 
+                                    onClick={() => { setConfirmDelete({ id: tip.id, type: 'tip', title: tip.title }); }}
+                                    className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-rose-500 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white"
+                                  >
+                                    <Trash2 className="w-4 h-4" /> Excluir
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {tips.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUMA DICA CADASTRADA</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -893,6 +1124,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
 
       <Modal isOpen={isTipModalOpen} onClose={resetModals} title={editingTip ? 'Alterar Dica de Mestre' : 'Nova Dica de Mestre'} maxWidth="max-w-2xl">
         <TipForm plans={plans} tip={editingTip} onSave={(data) => { handlers.saveTip(data); onSaveComplete('Dica salva com sucesso!'); }} />
+      </Modal>
+
+      <Modal isOpen={isHomeVideoModalOpen} onClose={resetModals} title={editingHomeVideo ? 'Alterar Vídeo de Instrução' : 'Novo Vídeo de Instrução'} maxWidth="max-w-xl">
+        <HomeVideoForm video={editingHomeVideo} onSave={(data) => { handlers.saveHomeVideo(data); onSaveComplete('O vídeo de instrução foi salvo com sucesso!'); }} />
       </Modal>
 
       <AnimatePresence>
@@ -1658,6 +1893,83 @@ const TipForm: React.FC<{ plans: Plan[]; tip: Tip | null; onSave: (t: Tip) => vo
       </div>
 
       <button onClick={() => onSave({ id: tip?.id || '', title, content, icon, accent_color: accentColor, active, target_plans: selectedPlans })} className="w-full py-6 bg-blue-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 text-lg hover:bg-blue-600 transition-all uppercase tracking-widest">SALVAR DICA</button>
+    </div>
+  );
+};
+
+const formatYoutubeUrl = (url: string): string => {
+  if (!url) return '';
+  // Match standard youtube link, including shorts and youtu.be
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  
+  if (match && match[2].length === 11) {
+    return `https://www.youtube.com/embed/${match[2]}`;
+  }
+  return url;
+};
+
+const HomeVideoForm: React.FC<{ video: HomeVideo | null; onSave: (v: HomeVideo) => void }> = ({ video, onSave }) => {
+  const [title, setTitle] = useState(video?.title || '');
+  const [desc, setDesc] = useState(video?.description || '');
+  const [url, setUrl] = useState(video?.video_url || '');
+  const [active, setActive] = useState(video?.active ?? true);
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Título do Vídeo</label>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Instruções de Início" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Descrição Curta</label>
+        <textarea rows={3} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Breve explicação do conteúdo do vídeo..." className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all resize-none text-sm leading-relaxed" />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between items-center mb-1">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Link do Vídeo (Embed)</label>
+          <a href="https://support.google.com/youtube/answer/171780" target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 font-bold uppercase flex items-center gap-1 hover:underline">
+            <Info className="w-3 h-3" /> Como obter o link?
+          </a>
+        </div>
+        <div className="relative">
+          <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.youtube.com/embed/..." className="w-full p-5 pr-14 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold outline-none focus:border-blue-500 transition-all text-sm" />
+          <div className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-300">
+            <Link className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 py-6 px-8 bg-zinc-50 dark:bg-zinc-800 rounded-3xl border border-zinc-100 dark:border-zinc-700">
+        <button 
+          onClick={() => setActive(!active)} 
+          className={`w-14 h-8 rounded-full transition-all relative ${active ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+        >
+          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${active ? 'left-7' : 'left-1'}`} />
+        </button>
+        <div className="flex flex-col">
+          <span className="font-black text-[11px] uppercase tracking-widest text-zinc-800 dark:text-white">
+            {active ? 'VÍDEO ATIVO' : 'VÍDEO DESATIVADO'}
+          </span>
+          <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Somente vídeos ativos podem ser sorteados para exibição.</span>
+        </div>
+      </div>
+
+      <button 
+        disabled={!title || !url}
+        onClick={() => onSave({ 
+          id: video?.id || '', 
+          title, 
+          description: desc, 
+          video_url: formatYoutubeUrl(url), 
+          active 
+        })} 
+        className={`w-full py-6 text-white font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest text-lg ${!title || !url ? 'bg-zinc-400 cursor-not-allowed shadow-none' : 'bg-blue-500 shadow-blue-500/20 hover:bg-blue-600 active:scale-[0.98]'}`}
+      >
+        {video?.id ? 'ATUALIZAR VÍDEO' : 'CADASTRAR VÍDEO'}
+      </button>
     </div>
   );
 };

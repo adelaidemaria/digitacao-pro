@@ -6,8 +6,8 @@ import { Home } from './views/Home';
 
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
-import { Module, Lesson, Profile, Plan, Course, Tip } from './types';
-import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock, Lightbulb } from 'lucide-react';
+import { Module, Lesson, Profile, Plan, Course, Tip, HomeVideo, HomeConfig } from './types';
+import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock, Lightbulb, Palette, LayoutDashboard, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
 
@@ -237,6 +237,16 @@ const AppContent: React.FC = () => {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [tips, setTips] = useState<Tip[]>([]);
+  const [homeVideos, setHomeVideos] = useState<HomeVideo[]>([]);
+  const [homeConfig, setHomeConfig] = useState<HomeConfig>({
+    id: 1,
+    layout_scheme: 'classic',
+    show_stats: true,
+    show_videos: true,
+    show_tips: true,
+    show_modules: true,
+    show_upgrade: true
+  });
   
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<any[]>([]);
@@ -273,12 +283,14 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [modulesRes, lessonsRes, announcementsRes, coursesRes, tipsRes] = await Promise.all([
+        const [modulesRes, lessonsRes, announcementsRes, coursesRes, tipsRes, homeVideosRes, homeConfigRes] = await Promise.all([
           supabase.from('modules').select('*').order('order'),
           supabase.from('lessons').select('*').order('order'),
           supabase.from('announcements').select('*').order('created_at', { ascending: false }),
           supabase.from('courses').select('*').order('order'),
-          supabase.from('tips').select('*').order('created_at', { ascending: false })
+          supabase.from('tips').select('*').order('created_at', { ascending: false }),
+          supabase.from('home_videos').select('*').order('created_at', { ascending: false }),
+          supabase.from('home_config').select('*').maybeSingle()
         ]);
 
         if (modulesRes.data) setModules(modulesRes.data);
@@ -286,6 +298,8 @@ const AppContent: React.FC = () => {
         if (announcementsRes.data) setAnnouncements(announcementsRes.data);
         if (coursesRes.data) setCourses(coursesRes.data);
         if (tipsRes.data) setTips(tipsRes.data as Tip[]);
+        if (homeVideosRes.data) setHomeVideos(homeVideosRes.data as HomeVideo[]);
+        if (homeConfigRes.data) setHomeConfig(homeConfigRes.data as HomeConfig);
         
         await fetchPlans();
       } catch (err) {
@@ -554,6 +568,90 @@ const AppContent: React.FC = () => {
     deleteTip: async (id: string) => {
       const { error } = await supabase.from('tips').delete().eq('id', id);
       if (!error) setTips(prev => prev.filter(t => t.id !== id));
+    },
+
+    // Home Configuration
+    saveHomeVideo: async (videoData: HomeVideo) => {
+      const payload = { ...videoData };
+      if (!payload.id) delete (payload as any).id;
+
+      const { error } = await supabase.from('home_videos').upsert(payload);
+      if (error) {
+        console.error('Error saving video:', error);
+        return;
+      }
+
+      const { data } = await supabase.from('home_videos').select('*').order('created_at', { ascending: false });
+      if (data) setHomeVideos(data as HomeVideo[]);
+    },
+    deleteHomeVideo: async (id: string) => {
+      const { error } = await supabase.from('home_videos').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting video:', error);
+        return;
+      }
+      setHomeVideos(prev => prev.filter(v => v.id !== id));
+    },
+    updateHomeConfig: async (config: Partial<HomeConfig>) => {
+      try {
+        // Fetch existing configurations to find the first one or determine if a new one is needed
+        const { data: existingConfigs, error: fetchError } = await supabase
+          .from('home_config')
+          .select('*')
+          .order('id', { ascending: true }); // Order by ID to get the "first" one if multiple exist
+
+        if (fetchError) {
+          console.error('Error fetching existing home config:', fetchError);
+          setErrorNotification({
+            message: 'Erro ao buscar configuração',
+            submessage: 'Não foi possível carregar a configuração da página inicial.'
+          });
+          return;
+        }
+
+        let payload: HomeConfig;
+        if (existingConfigs && existingConfigs.length > 0) {
+          // Update the first existing configuration
+          const current = existingConfigs[0];
+          payload = {
+            ...current,
+            ...config,
+            id: current.id // Ensure the ID is preserved for upsert
+          };
+        } else {
+          // Create a new configuration if none exist
+          payload = {
+            id: 1, // Default ID for a new entry, assuming it's a singleton table
+            layout_scheme: 'classic', // Default values
+            show_stats: true,
+            show_videos: true,
+            show_tips: true,
+            show_modules: true,
+            show_upgrade: true,
+            ...config
+          };
+        }
+
+        console.log('Syncing Home Config:', payload);
+        const { error: upsertError } = await supabase.from('home_config').upsert(payload, { onConflict: 'id' });
+
+        if (upsertError) {
+          console.error('Error updating config in Supabase:', upsertError);
+          setErrorNotification({
+            message: 'Erro ao salvar configuração',
+            submessage: 'Não foi possível salvar as alterações na configuração da página inicial.'
+          });
+          return;
+        }
+
+        setHomeConfig(payload as HomeConfig);
+      } catch (err: any) {
+        console.error('Crash in updateHomeConfig:', err);
+        setErrorNotification({
+          message: 'Erro inesperado',
+          submessage: 'Ocorreu um erro ao tentar atualizar a configuração da página inicial.'
+        });
+      }
     }
   };
 
@@ -607,6 +705,8 @@ const AppContent: React.FC = () => {
           onGoToLessons={() => setView('dashboard')}
           announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
+          homeVideos={homeVideos}
+          homeConfig={homeConfig}
         />
       )}
 
@@ -621,6 +721,8 @@ const AppContent: React.FC = () => {
           announcements={announcements}
           courses={courses}
           tips={tips}
+          homeVideos={homeVideos}
+          homeConfig={homeConfig}
           onLogout={() => setView('login')}
           handlers={adminHandlers as any}
         />

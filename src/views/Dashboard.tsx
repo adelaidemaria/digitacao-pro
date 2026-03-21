@@ -214,8 +214,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="max-w-[1200px] mx-auto">
           {announcement && (
             <div 
-              className="mb-8 overflow-hidden rounded-[24px] py-3.5 shadow-xl shadow-black/5 border border-black/5 relative group"
+              className={`mb-8 overflow-hidden rounded-[24px] py-3.5 shadow-xl shadow-black/5 border border-black/5 relative group transition-all ${announcement.link ? 'cursor-pointer hover:scale-[1.01] active:scale-[0.99]' : ''}`}
               style={{ backgroundColor: announcement.bg_color }}
+              onClick={() => {
+                if (announcement.link) {
+                  const url = announcement.link.startsWith('http') ? announcement.link : `https://${announcement.link}`;
+                  window.open(url, '_blank');
+                  onAnnouncementClick?.(announcement.id);
+                }
+              }}
             >
               <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
               <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/20 to-transparent z-10 pointer-events-none" />
@@ -238,22 +245,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     }}
                     className="whitespace-nowrap inline-block"
                   >
-                    {announcement.link ? (
-                      <a 
-                        href={announcement.link} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        onClick={() => onAnnouncementClick?.(announcement.id)}
-                        className="font-extrabold text-base uppercase tracking-tight hover:underline flex items-center gap-3 px-4"
-                        style={{ color: announcement.text_color }}
-                      >
-                        {announcement.content} <ArrowRight className="w-4 h-4 inline opacity-50" />
-                      </a>
-                    ) : (
-                      <span className="font-extrabold text-base uppercase tracking-tight px-4" style={{ color: announcement.text_color }}>
-                        {announcement.content}
-                      </span>
-                    )}
+                    <span className="font-extrabold text-base uppercase tracking-tight px-4 flex items-center gap-3" style={{ color: announcement.text_color }}>
+                      {announcement.content} 
+                      {announcement.link && <ArrowRight className="w-4 h-4 inline opacity-50 group-hover:translate-x-1 transition-transform" />}
+                    </span>
                   </motion.div>
                 </div>
               </div>
