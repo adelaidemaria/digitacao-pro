@@ -363,7 +363,8 @@ const AppContent: React.FC = () => {
         lesson_id: currentLesson.id, 
         wpm: stats.wpm, 
         accuracy: stats.accuracy,
-        duration_seconds: stats.duration_seconds
+        duration_seconds: stats.duration_seconds,
+        completed_at: new Date().toISOString()
       };
       
       const { error } = await supabase.from('progress').upsert([newProgress], { onConflict: 'user_id,lesson_id' });
@@ -707,6 +708,7 @@ const AppContent: React.FC = () => {
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
           homeVideos={homeVideos}
           homeConfig={homeConfig}
+          courses={courses}
         />
       )}
 
@@ -775,12 +777,12 @@ const AppContent: React.FC = () => {
               </div>
               
               <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar">
-                {courses.filter(c => c.active).length === 0 ? (
+                {courses.filter(c => c.active && c.target_plans?.includes(user?.plan_id || '')).length === 0 ? (
                   <div className="text-center py-12">
-                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Nenhum curso disponível no momento.</p>
+                     <p className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Nenhum curso disponível para o seu plano no momento.</p>
                   </div>
                 ) : (
-                  courses.filter(c => c.active).sort((a,b) => (a.order||0)-(b.order||0)).map((course) => (
+                  courses.filter(c => c.active && c.target_plans?.includes(user?.plan_id || '')).sort((a,b) => (a.order||0)-(b.order||0)).map((course) => (
                     <div key={course.id} className="group flex flex-col md:flex-row bg-white dark:bg-zinc-800/50 border-2 border-zinc-100 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5">
                       <div className="flex-1 p-6">
                         <div className="flex justify-between items-start gap-4 mb-4">

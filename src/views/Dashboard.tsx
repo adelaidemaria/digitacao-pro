@@ -33,7 +33,65 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Sort modules by order
   const sortedModules = [...modules].sort((a, b) => (a.order || 0) - (b.order || 0));
   
-  const [activeModule, setActiveModule] = useState<string | null>(sortedModules[0]?.id || null);
+  // Filter courses based on student plan
+  const filteredCourses = courses.filter(c => 
+    c.active && c.target_plans && c.target_plans.includes(user.plan_id || '')
+  );
+  const hasCoursesForPlan = filteredCourses.length > 0;
+
+  const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [manualSelection, setManualSelection] = useState(false);
+
+  // Intelligent initial module selection
+  const initialModuleId = React.useMemo(() => {
+    if (sortedModules.length === 0) return null;
+    
+    // If no progress yet, default to first module
+    if (progress.length === 0) return sortedModules[0].id;
+    
+    // Find the latest activity based on completed_at 
+    const latestProgress = [...progress].sort((a, b) => {
+      const dateA = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+      const dateB = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+      return dateB - dateA;
+    })[0];
+    
+    if (latestProgress) {
+      const lastLesson = lessons.find(l => l.id === latestProgress.lesson_id);
+      if (lastLesson) {
+        const lastModuleId = lastLesson.module_id;
+        
+        // Check if this module is finished
+        const moduleLessons = lessons.filter(l => l.module_id === lastModuleId);
+        const completedLessonIds = new Set(progress.map(p => p.lesson_id));
+        const isLastModuleFinished = moduleLessons.length > 0 && moduleLessons.every(l => completedLessonIds.has(l.id));
+        
+        if (isLastModuleFinished) {
+          const currentModuleIdx = sortedModules.findIndex(m => m.id === lastModuleId);
+          const nextModule = sortedModules[currentModuleIdx + 1];
+          // Only open next module if it's accessible
+          if (nextModule && accessibleModuleIds.includes(nextModule.id)) {
+            return nextModule.id;
+          }
+        }
+        return lastModuleId;
+      }
+    }
+    
+    return sortedModules[0].id;
+  }, [progress, lessons, sortedModules, accessibleModuleIds]);
+
+  // Sync activeModule with initialModuleId until the user manually picks something
+  React.useEffect(() => {
+    if (initialModuleId && !manualSelection) {
+      setActiveModule(initialModuleId);
+    }
+  }, [initialModuleId, manualSelection]);
+
+  const handleModuleClick = (moduleId: string) => {
+    setManualSelection(true);
+    setActiveModule(activeModule === moduleId ? null : moduleId);
+  };
 
   const getLessonStatus = (lessonId: string) => {
     return progress.find(p => p.lesson_id === lessonId);
@@ -91,9 +149,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100">
+    <div className="h-screen bg-[#f4f7fa] dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100 overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-full lg:w-[280px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 lg:h-screen overflow-hidden">
+      <aside className="w-full lg:w-[280px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 lg:h-full overflow-hidden shadow-sm z-10">
         <div className="p-5 flex flex-col h-full overflow-y-auto scrollbar-hide">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/30">
@@ -115,12 +173,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
               <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">AULAS</span>
             </button>
-            <button 
-              onClick={onOpenCourses}
-              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
-            >
-              <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
-            </button>
+            {hasCoursesForPlan && (
+              <button 
+                onClick={onOpenCourses}
+                className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+              >
+                <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
+              </button>
+            )}
             <button 
               onClick={() => setIsAchievementsOpen(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group text-sm"
@@ -296,14 +356,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 const isCompleted = isModuleCompleted(module.id);
 
                 return (
-                  <section key={module.id} className={`space-y-12 ${isLocked ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                    <div className="flex items-center justify-between bg-zinc-100/50 dark:bg-zinc-800/30 p-8 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm transition-all hover:shadow-md">
+                  <section key={module.id} className={`space-y-6 ${isLocked ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                    <div 
+                      onClick={() => !isLocked && handleModuleClick(module.id)}
+                      className={`flex items-center justify-between bg-zinc-100/50 dark:bg-zinc-800/30 p-8 rounded-[32px] border border-zinc-200/50 dark:border-zinc-800/50 shadow-sm transition-all hover:shadow-md cursor-pointer group/header ${activeModule === module.id ? 'ring-2 ring-blue-500/20 bg-white dark:bg-zinc-800/50' : ''}`}
+                    >
                       <div className="flex items-center gap-8">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black border-2 transition-all ${isCompleted ? 'bg-emerald-500 text-white border-emerald-500 shadow-xl shadow-emerald-500/30' : 'bg-white dark:bg-zinc-800 text-blue-600 border-zinc-200 dark:border-zinc-700 shadow-inner'}`}>
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black border-2 transition-all ${isCompleted ? 'bg-emerald-500 text-white border-emerald-500 shadow-xl shadow-emerald-500/30' : 'bg-white dark:bg-zinc-800 text-blue-600 border-zinc-200 dark:border-zinc-700 shadow-inner'} ${activeModule === module.id ? 'scale-110' : ''}`}>
                           {idx + 1}
                         </div>
                         <div>
-                          <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-1">{module.title}</h2>
+                          <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-1">{module.title}</h2>
+                            {activeModule === module.id ? (
+                              <ArrowRight className="w-5 h-5 text-blue-500 rotate-90 transition-transform" />
+                            ) : (
+                              <ArrowRight className="w-5 h-5 text-zinc-300 transition-transform" />
+                            )}
+                          </div>
                           <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-[0.2em]">{module.description}</p>
                         </div>
                       </div>
@@ -324,184 +394,196 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                     </div>
 
-                    <div className="w-full">
-                      <table className="w-full border-separate border-spacing-y-3">
-                        <thead>
-                          <tr className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">
-                            <th className="px-4 md:px-8 pb-2 text-left">Lição</th>
-                            <th className="hidden lg:table-cell px-6 pb-2 text-center">Nível</th>
-                            <th className="hidden lg:table-cell px-6 pb-2 text-center">Tempo</th>
-                            <th className="hidden sm:table-cell px-6 pb-2 text-center">Velocidade</th>
-                            <th className="hidden sm:table-cell px-6 pb-2 text-center">Precisão</th>
-                            <th className="px-6 pb-2 text-right pr-4 md:pr-12">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {lessons.filter(l => l.module_id === module.id).sort((a,b) => (a.order||0) - (b.order||0)).map(lesson => {
-                            const status = getLessonStatus(lesson.id);
-
-                            return (
-                              <motion.tr
-                                key={lesson.id}
-                                whileHover={!isLocked ? { scale: 1.002, y: -1 } : {}}
-                                onClick={() => {
-                                  if (isLocked) return;
+                    <AnimatePresence>
+                      {activeModule === module.id && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="w-full pt-4">
+                            <table className="w-full border-separate border-spacing-y-3">
+                              <thead>
+                                <tr className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.2em]">
+                                  <th className="px-4 md:px-8 pb-2 text-left">Lição</th>
+                                  <th className="hidden lg:table-cell px-6 pb-2 text-center">Nível</th>
+                                  <th className="hidden lg:table-cell px-6 pb-2 text-center">Tempo</th>
+                                  <th className="hidden sm:table-cell px-6 pb-2 text-center">Velocidade</th>
+                                  <th className="hidden sm:table-cell px-6 pb-2 text-center">Precisão</th>
+                                  <th className="px-6 pb-2 text-right pr-4 md:pr-12">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {lessons.filter(l => l.module_id === module.id).sort((a,b) => (a.order||0) - (b.order||0)).map(lesson => {
                                   const status = getLessonStatus(lesson.id);
-                                  if (status) {
-                                    setRedoLesson(lesson);
-                                  } else {
-                                    onStartLesson(lesson);
-                                  }
-                                }}
-                                className={`group cursor-pointer transition-all ${
-                                  isLocked ? 'opacity-50' : ''
-                                }`}
-                              >
-                                {/* Lição Column */}
-                                <td className={`pl-4 md:pl-8 pr-4 md:pr-6 py-5 rounded-l-[24px] border-y-2 border-l-2 transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <div className="flex items-center gap-3 md:gap-5">
-                                    <div className={`w-8 h-8 md:w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
-                                      status ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 
-                                      isLocked ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' : 
-                                      'bg-blue-50 dark:bg-blue-900/20 text-blue-500 border border-blue-100'
-                                    }`}>
-                                      {status ? <CheckCircle className="w-4 h-4 md:w-5 h-5 font-black" /> : isLocked ? <Lock className="w-4 h-4 md:w-5 h-5" /> : <Play className="w-4 h-4 md:w-5 h-5 ml-0.5" />}
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Aula {lesson.order}</span>
-                                      <span className="font-bold text-sm md:text-base text-zinc-800 dark:text-white group-hover:text-blue-500 transition-colors uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{lesson.title}</span>
-                                      
-                                      {/* Mobile-only stats */}
-                                      <div className="flex sm:hidden items-center gap-3 mt-1.5">
-                                        {status ? (
-                                          <>
-                                            <span className="text-[9px] font-black text-emerald-600 flex items-center gap-1"><Activity className="w-2.5 h-2.5" /> {status.wpm}</span>
-                                            <span className="text-[9px] font-black text-blue-500 flex items-center gap-1"><Percent className="w-2.5 h-2.5" /> {status.accuracy}%</span>
-                                            {status.duration_seconds && <span className="text-[9px] font-black text-zinc-500 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {status.duration_seconds} seg</span>}
-                                          </>
-                                        ) : (
-                                           <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border ${
-                                            lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                                            lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
-                                            'bg-rose-50 border-rose-200 text-rose-600'
+
+                                  return (
+                                    <motion.tr
+                                      key={lesson.id}
+                                      whileHover={!isLocked ? { scale: 1.002, y: -1 } : {}}
+                                      onClick={() => {
+                                        if (isLocked) return;
+                                        const status = getLessonStatus(lesson.id);
+                                        if (status) {
+                                          setRedoLesson(lesson);
+                                        } else {
+                                          onStartLesson(lesson);
+                                        }
+                                      }}
+                                      className={`group cursor-pointer transition-all ${
+                                        isLocked ? 'opacity-50' : ''
+                                      }`}
+                                    >
+                                      {/* Lição Column */}
+                                      <td className={`pl-4 md:pl-8 pr-4 md:pr-6 py-5 rounded-l-[24px] border-y-2 border-l-2 transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <div className="flex items-center gap-3 md:gap-5">
+                                          <div className={`w-8 h-8 md:w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
+                                            status ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 
+                                            isLocked ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' : 
+                                            'bg-blue-50 dark:bg-blue-900/20 text-blue-500 border border-blue-100'
                                           }`}>
-                                            {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
+                                            {status ? <CheckCircle className="w-4 h-4 md:w-5 h-5 font-black" /> : isLocked ? <Lock className="w-4 h-4 md:w-5 h-5" /> : <Play className="w-4 h-4 md:w-5 h-5 ml-0.5" />}
+                                          </div>
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Aula {lesson.order}</span>
+                                            <span className="font-bold text-sm md:text-base text-zinc-800 dark:text-white group-hover:text-blue-500 transition-colors uppercase tracking-tight truncate max-w-[120px] md:max-w-none">{lesson.title}</span>
+                                            
+                                            {/* Mobile-only stats */}
+                                            <div className="flex sm:hidden items-center gap-3 mt-1.5">
+                                              {status ? (
+                                                <>
+                                                  <span className="text-[9px] font-black text-emerald-600 flex items-center gap-1"><Activity className="w-2.5 h-2.5" /> {status.wpm}</span>
+                                                  <span className="text-[9px] font-black text-blue-500 flex items-center gap-1"><Percent className="w-2.5 h-2.5" /> {status.accuracy}%</span>
+                                                  {status.duration_seconds && <span className="text-[9px] font-black text-zinc-500 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {status.duration_seconds} seg</span>}
+                                                </>
+                                              ) : (
+                                                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border ${
+                                                  lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                                  lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                                                  'bg-rose-50 border-rose-200 text-rose-600'
+                                                }`}>
+                                                  {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </td>
 
-                                {/* Nível Column (Hidden on mobile/tablet) */}
-                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
-                                    lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
-                                    lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
-                                    'bg-rose-50 border-rose-200 text-rose-600'
-                                  }`}>
-                                    {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
-                                  </span>
-                                </td>
-
-                                {/* Tempo Column (Hidden on mobile/tablet) */}
-                                <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <div className="flex flex-col items-center">
-                                    {status?.duration_seconds ? (
-                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
-                                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> {status.duration_seconds} seg
-                                      </span>
-                                    ) : (
-                                      <span className="text-sm font-bold text-zinc-300">--</span>
-                                    )}
-                                  </div>
-                                </td>
-
-                                {/* Velocidade Column (Hidden on mobile) */}
-                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <div className="flex flex-col items-center">
-                                    {status ? (
-                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
-                                        <Activity className="w-3.5 h-3.5 text-emerald-500" /> {status.wpm} PPM
-                                      </span>
-                                    ) : (
-                                      <span className="text-sm font-bold text-zinc-300">--</span>
-                                    )}
-                                  </div>
-                                </td>
-
-                                {/* Precisão Column (Hidden on mobile) */}
-                                <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <div className="flex flex-col items-center">
-                                    {status ? (
-                                      <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
-                                        <Percent className="w-3.5 h-3.5 text-blue-500" /> {status.accuracy}%
-                                      </span>
-                                    ) : (
-                                      <span className="text-sm font-bold text-zinc-300">--</span>
-                                    )}
-                                  </div>
-                                </td>
-
-                                {/* Status Column */}
-                                <td className={`pr-4 md:pr-12 pl-4 md:pl-6 py-5 rounded-r-[24px] border-y-2 border-r-2 text-right transition-colors ${
-                                  !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
-                                } ${
-                                  status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
-                                }`}>
-                                  <div className="flex items-center justify-end gap-3 md:gap-5">
-                                    {status ? (
-                                      <>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setRedoLesson(lesson);
-                                          }}
-                                          className="hidden md:flex text-[10px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-[0.2em] items-center gap-1.5 group/btn"
-                                        >
-                                          <RotateCcw className="w-3 h-3 transition-transform group-hover/btn:rotate-[-45deg]" /> Refazer
-                                        </button>
-                                        <span className="text-zinc-800 dark:text-white flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-                                          <span className="hidden xs:inline">Concluido</span> <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                      {/* Nível Column (Hidden on mobile/tablet) */}
+                                      <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <span className={`inline-flex px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
+                                          lesson.difficulty === 'easy' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' :
+                                          lesson.difficulty === 'medium' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                                          'bg-rose-50 border-rose-200 text-rose-600'
+                                        }`}>
+                                          {lesson.difficulty === 'easy' ? 'Fácil' : lesson.difficulty === 'medium' ? 'Médio' : 'Avançado'}
                                         </span>
-                                      </>
-                                    ) : isLocked ? (
-                                      <span className="text-zinc-400 flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-                                        <span className="hidden xs:inline">Bloqueado</span> <Lock className="w-4 h-4" />
-                                      </span>
-                                    ) : (
-                                      <span className="text-blue-500 group-hover:translate-x-1 transition-transform flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
-                                        <span className="hidden xs:inline">Iniciar</span> <ArrowRight className="w-4 h-4" />
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                              </motion.tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                                      </td>
+
+                                      {/* Tempo Column (Hidden on mobile/tablet) */}
+                                      <td className={`hidden lg:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <div className="flex flex-col items-center">
+                                          {status?.duration_seconds ? (
+                                            <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                              <Clock className="w-3.5 h-3.5 text-zinc-400" /> {status.duration_seconds} seg
+                                            </span>
+                                          ) : (
+                                            <span className="text-sm font-bold text-zinc-300">--</span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Velocidade Column (Hidden on mobile) */}
+                                      <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <div className="flex flex-col items-center">
+                                          {status ? (
+                                            <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                              <Activity className="w-3.5 h-3.5 text-emerald-500" /> {status.wpm} PPM
+                                            </span>
+                                          ) : (
+                                            <span className="text-sm font-bold text-zinc-300">--</span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Precisão Column (Hidden on mobile) */}
+                                      <td className={`hidden sm:table-cell px-6 py-5 border-y-2 text-center transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <div className="flex flex-col items-center">
+                                          {status ? (
+                                            <span className="text-sm font-black text-zinc-800 dark:text-white flex items-center gap-1.5 uppercase tracking-tight">
+                                              <Percent className="w-3.5 h-3.5 text-blue-500" /> {status.accuracy}%
+                                            </span>
+                                          ) : (
+                                            <span className="text-sm font-bold text-zinc-300">--</span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Status Column */}
+                                      <td className={`pr-4 md:pr-12 pl-4 md:pl-6 py-5 rounded-r-[24px] border-y-2 border-r-2 text-right transition-colors ${
+                                        !isLocked ? 'group-hover:bg-zinc-100/80 dark:group-hover:bg-zinc-800/80' : ''
+                                      } ${
+                                        status ? 'bg-emerald-50/10 border-emerald-100/50' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'
+                                      }`}>
+                                        <div className="flex items-center justify-end gap-3 md:gap-5">
+                                          {status ? (
+                                            <>
+                                              <button 
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setRedoLesson(lesson);
+                                                }}
+                                                className="hidden md:flex text-[10px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-[0.2em] items-center gap-1.5 group/btn"
+                                              >
+                                                <RotateCcw className="w-3 h-3 transition-transform group-hover/btn:rotate-[-45deg]" /> Refazer
+                                              </button>
+                                              <span className="text-zinc-800 dark:text-white flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                                <span className="hidden xs:inline">Concluido</span> <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                              </span>
+                                            </>
+                                          ) : isLocked ? (
+                                            <span className="text-zinc-400 flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                              <span className="hidden xs:inline">Bloqueado</span> <Lock className="w-4 h-4" />
+                                            </span>
+                                          ) : (
+                                            <span className="text-blue-500 group-hover:translate-x-1 transition-transform flex items-center gap-2 font-black text-[10px] md:text-[11px] uppercase tracking-widest">
+                                              <span className="hidden xs:inline">Iniciar</span> <ArrowRight className="w-4 h-4" />
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </motion.tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     {isLocked && (
                       <div className="p-10 bg-zinc-100/50 dark:bg-zinc-800/20 rounded-[40px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center text-center">

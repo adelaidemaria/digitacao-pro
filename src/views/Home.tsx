@@ -40,6 +40,7 @@ interface HomeViewProps {
   onAnnouncementClick?: (id: string) => void;
   homeVideos: HomeVideo[];
   homeConfig: HomeConfig;
+  courses: Course[];
 }
 
 const FALLBACK_TIPS = [
@@ -84,10 +85,18 @@ const formatYoutubeUrl = (url: string): string => {
 };
 
 export const Home: React.FC<HomeViewProps> = ({
-  user, modules, lessons, plans, progress, tips = [], onLogout, onOpenSettings, onOpenProfile, onOpenCourses, onGoToLessons, announcement, onAnnouncementClick, homeVideos = [], homeConfig
+  user, modules, lessons, plans, progress, tips = [], onLogout, onOpenSettings, onOpenProfile, onOpenCourses, onGoToLessons, announcement, onAnnouncementClick, homeVideos = [], homeConfig, courses = []
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
+
+  // Filter courses based on student plan
+  const filteredCourses = useMemo(() => {
+    return courses.filter(c => 
+      c.active && c.target_plans && c.target_plans.includes(user.plan_id || '')
+    );
+  }, [courses, user.plan_id]);
+  const hasCoursesForPlan = filteredCourses.length > 0;
 
   // Select a random active video once per mount
   const activeVideo = useMemo(() => {
@@ -178,10 +187,10 @@ export const Home: React.FC<HomeViewProps> = ({
   }, [homeConfig.layout_scheme]);
 
   return (
-    <div className={`min-h-screen ${themeClasses.bg} dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100`}>
+    <div className={`h-screen bg-[#f4f7fa] dark:bg-zinc-950 flex flex-col lg:flex-row font-sans text-zinc-900 dark:text-zinc-100 overflow-hidden`}>
 
       {/* ─── SIDEBAR (igual ao Dashboard) ─── */}
-      <aside className="w-full lg:w-[280px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 lg:h-screen overflow-hidden">
+      <aside className="w-full lg:w-[280px] bg-white dark:bg-zinc-900 border-r border-zinc-200/50 dark:border-zinc-800 flex flex-col shrink-0 lg:h-full overflow-hidden shadow-sm z-10">
         <div className="p-5 flex flex-col h-full overflow-y-auto scrollbar-hide">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-6">
@@ -210,13 +219,15 @@ export const Home: React.FC<HomeViewProps> = ({
               <span className="text-sm font-bold uppercase tracking-tight">AULAS</span>
             </button>
 
-            <button
-              onClick={onOpenCourses}
-              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
-            >
-              <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" />
-              <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
-            </button>
+            {hasCoursesForPlan && (
+              <button
+                onClick={onOpenCourses}
+                className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+              >
+                <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" />
+                <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
+              </button>
+            )}
 
             <button
               onClick={() => setIsAchievementsOpen(true)}

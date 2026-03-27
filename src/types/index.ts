@@ -89,6 +89,7 @@ export interface Course {
   active: boolean;
   clicks: number;
   order: number;
+  target_plans: string[];
   created_at?: string;
 }
 
