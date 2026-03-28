@@ -123,3 +123,24 @@ export interface HomeConfig {
   show_upgrade: boolean;
   updated_at?: string;
 }
+
+export interface CertificateConfig {
+  id?: string;
+  plan_id: string; // references Plan
+  course_name: string;
+  workload_hours: number;
+  description: string;
+  signed_by: string;
+  required_modules: string[]; // array of Module IDs
+  active: boolean;
+  created_at?: string;
+}
+
+export interface UserCertificate {
+  id?: string;
+  user_id: string;
+  plan_id: string;
+  stats_wpm: number;
+  stats_accuracy: number;
+  generated_at?: string;
+}

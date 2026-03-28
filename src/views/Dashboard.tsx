@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone, Video, Home as HomeIcon } from 'lucide-react';
+import { BookOpen, CheckCircle, Lock, Play, MessageSquare, Award, User, LogOut, Settings as SettingsIcon, Crown, Activity, Percent, ArrowRight, ExternalLink, TrendingUp, X, Clock, RotateCcw, Megaphone, Video, Home as HomeIcon, Monitor, MousePointer2 } from 'lucide-react';
 import { Module, Lesson, Plan, Announcement, Course } from '../types';
 
 interface DashboardProps {
@@ -19,10 +19,13 @@ interface DashboardProps {
   onCourseClick?: (id: string) => void;
   onOpenCourses: () => void;
   onGoToHome?: () => void;
+  onOpenPosture: () => void;
+  onOpenTutorial: () => void;
+  onOpenCertificate?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
-  user, modules, lessons, plans, courses, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick, onCourseClick, onOpenCourses, onGoToHome 
+  user, modules, lessons, plans, courses, progress, onStartLesson, onLogout, onOpenSettings, onOpenProfile, announcement, onAnnouncementClick, onCourseClick, onOpenCourses, onGoToHome, onOpenPosture, onOpenTutorial, onOpenCertificate 
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
@@ -168,19 +171,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={onGoToHome}
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
             >
-              <HomeIcon className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">INÍCIO</span>
+              <HomeIcon className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold tracking-tight">Início</span>
+            </button>
+            <button 
+              onClick={onOpenPosture}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <Monitor className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-500 transition-colors" /> <span className="text-sm font-bold tracking-tight">Postura</span>
+            </button>
+            <button 
+              onClick={onOpenTutorial}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <MousePointer2 className="w-4 h-4 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> <span className="text-sm font-bold tracking-tight">Aula Teste</span>
             </button>
             <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
-              <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">AULAS</span>
+              <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">Aulas</span>
             </button>
             {hasCoursesForPlan && (
               <button 
                 onClick={onOpenCourses}
                 className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
               >
-                <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
+                <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" /> <span className="text-sm font-bold tracking-tight">+ Cursos</span>
               </button>
             )}
+            <button 
+              onClick={onOpenCertificate}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group text-sm"
+            >
+              <Award className="w-4 h-4 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> 
+              <span className="text-sm font-bold tracking-tight">Certificado</span>
+            </button>
             <button 
               onClick={() => setIsAchievementsOpen(true)}
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all group text-sm"

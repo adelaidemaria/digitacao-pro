@@ -6,7 +6,10 @@ import { Home } from './views/Home';
 
 import { AdminPanel } from './views/AdminPanel';
 import { TypingView } from './views/TypingView';
-import { Module, Lesson, Profile, Plan, Course, Tip, HomeVideo, HomeConfig } from './types';
+import { PostureView } from './views/PostureView';
+import { FingerTutorialView } from './views/FingerTutorialView';
+import { StudentCertificateView } from './views/StudentCertificateView';
+import { Module, Lesson, Profile, Plan, Course, Tip, HomeVideo, HomeConfig, CertificateConfig, UserCertificate } from './types';
 import { X, Volume2, Type, Keyboard, Monitor, User, Activity, Video, ExternalLink, Settings, Check, Play, Clock, Lightbulb, Palette, LayoutDashboard, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
@@ -225,7 +228,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUp
 };
 
 const AppContent: React.FC = () => {
-  const [view, setView] = useState<'login' | 'dashboard' | 'admin' | 'typing' | 'home'>('login');
+  const [view, setView] = useState<'login' | 'dashboard' | 'admin' | 'typing' | 'home' | 'posture' | 'tutorial' | 'certificate'>('login');
 
   const [user, setUser] = useState<Profile | null>(null);
   
@@ -247,6 +250,8 @@ const AppContent: React.FC = () => {
     show_modules: true,
     show_upgrade: true
   });
+  const [certConfigs, setCertConfigs] = useState<CertificateConfig[]>([]);
+  const [userCertificates, setUserCertificates] = useState<UserCertificate[]>([]);
   
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<any[]>([]);
@@ -283,14 +288,16 @@ const AppContent: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [modulesRes, lessonsRes, announcementsRes, coursesRes, tipsRes, homeVideosRes, homeConfigRes] = await Promise.all([
+        const [modulesRes, lessonsRes, announcementsRes, coursesRes, tipsRes, homeVideosRes, homeConfigRes, certConfigsRes, userCertsRes] = await Promise.all([
           supabase.from('modules').select('*').order('order'),
           supabase.from('lessons').select('*').order('order'),
           supabase.from('announcements').select('*').order('created_at', { ascending: false }),
           supabase.from('courses').select('*').order('order'),
           supabase.from('tips').select('*').order('created_at', { ascending: false }),
           supabase.from('home_videos').select('*').order('created_at', { ascending: false }),
-          supabase.from('home_config').select('*').maybeSingle()
+          supabase.from('home_config').select('*').maybeSingle(),
+          supabase.from('certificate_config').select('*'),
+          supabase.from('user_certificates').select('*')
         ]);
 
         if (modulesRes.data) setModules(modulesRes.data);
@@ -300,6 +307,8 @@ const AppContent: React.FC = () => {
         if (tipsRes.data) setTips(tipsRes.data as Tip[]);
         if (homeVideosRes.data) setHomeVideos(homeVideosRes.data as HomeVideo[]);
         if (homeConfigRes.data) setHomeConfig(homeConfigRes.data as HomeConfig);
+        if (certConfigsRes.data) setCertConfigs(certConfigsRes.data as CertificateConfig[]);
+        if (userCertsRes.data) setUserCertificates(userCertsRes.data as UserCertificate[]);
         
         await fetchPlans();
       } catch (err) {
@@ -688,6 +697,9 @@ const AppContent: React.FC = () => {
           onCourseClick={adminHandlers.incrementCourseClick}
           onOpenCourses={() => setIsCoursesOpen(true)}
           onGoToHome={() => setView('home')}
+          onOpenPosture={() => setView('posture')}
+          onOpenTutorial={() => setView('tutorial')}
+          onOpenCertificate={() => setView('certificate')}
         />
       )}
 
@@ -704,6 +716,8 @@ const AppContent: React.FC = () => {
           onOpenProfile={() => setIsProfileOpen(true)}
           onOpenCourses={() => setIsCoursesOpen(true)}
           onGoToLessons={() => setView('dashboard')}
+          onOpenPosture={() => setView('posture')}
+          onOpenTutorial={() => setView('tutorial')}
           announcement={announcements.find(a => a.active && a.target_plans?.includes(user!.plan_id || ''))}
           onAnnouncementClick={adminHandlers.incrementAnnouncementClick}
           homeVideos={homeVideos}
@@ -725,8 +739,40 @@ const AppContent: React.FC = () => {
           tips={tips}
           homeVideos={homeVideos}
           homeConfig={homeConfig}
+          certConfigs={certConfigs}
+          userCertificates={userCertificates}
           onLogout={() => setView('login')}
-          handlers={adminHandlers as any}
+          handlers={{
+            ...adminHandlers as any,
+            saveCertConfig: async (config: CertificateConfig) => {
+              const payload = { ...config };
+              if (!payload.id) delete (payload as any).id;
+              const { error } = await supabase.from('certificate_config').upsert(payload);
+              if (!error) {
+                const { data } = await supabase.from('certificate_config').select('*');
+                if (data) setCertConfigs(data);
+              } else {
+                console.error("Error saving cert config:", error);
+                alert("Erro ao salvar o certificado: " + error.message);
+              }
+            }
+          }}
+        />
+      )}
+
+      {view === 'certificate' && user && (
+        <StudentCertificateView
+          user={user}
+          plan={plans.find(p => p.id === user.plan_id)}
+          config={certConfigs.find(c => c.plan_id === user.plan_id && c.active)}
+          userCertificate={userCertificates.find(uc => uc.user_id === user.id && uc.plan_id === user.plan_id)}
+          modules={modules}
+          lessons={lessons}
+          progress={progress}
+          onBack={() => setView('dashboard')}
+          onCertificateGenerated={(newCert) => {
+             setUserCertificates(prev => [...prev, newCert]);
+          }}
         />
       )}
 
@@ -742,6 +788,14 @@ const AppContent: React.FC = () => {
           progress={progress}
           onExit={() => { setView('dashboard'); setCurrentLesson(null); }}
         />
+      )}
+
+      {view === 'posture' && (
+        <PostureView onBack={() => setView('dashboard')} />
+      )}
+
+      {view === 'tutorial' && (
+        <FingerTutorialView onBack={() => setView('dashboard')} />
       )}
 
       {user && (

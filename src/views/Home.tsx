@@ -21,6 +21,7 @@ import {
   X,
   Megaphone,
   Lock,
+  Monitor,
 } from 'lucide-react';
 import { Module, Lesson, Plan, Announcement, Course, Tip, HomeVideo, HomeConfig } from '../types';
 
@@ -36,6 +37,8 @@ interface HomeViewProps {
   onOpenProfile: () => void;
   onOpenCourses: () => void;
   onGoToLessons: () => void;
+  onOpenPosture: () => void;
+  onOpenTutorial: () => void;
   announcement?: Announcement;
   onAnnouncementClick?: (id: string) => void;
   homeVideos: HomeVideo[];
@@ -85,7 +88,7 @@ const formatYoutubeUrl = (url: string): string => {
 };
 
 export const Home: React.FC<HomeViewProps> = ({
-  user, modules, lessons, plans, progress, tips = [], onLogout, onOpenSettings, onOpenProfile, onOpenCourses, onGoToLessons, announcement, onAnnouncementClick, homeVideos = [], homeConfig, courses = []
+  user, modules, lessons, plans, progress, tips = [], onLogout, onOpenSettings, onOpenProfile, onOpenCourses, onGoToLessons, onOpenPosture, onOpenTutorial, announcement, onAnnouncementClick, homeVideos = [], homeConfig, courses = []
 }) => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isPlanDetailsOpen, setIsPlanDetailsOpen] = useState(false);
@@ -208,7 +211,23 @@ export const Home: React.FC<HomeViewProps> = ({
             {/* INÍCIO - ativo */}
             <button className={`w-full flex items-center gap-3 px-4 py-3 ${themeClasses.primaryBg} dark:${themeClasses.primaryBg} ${themeClasses.primaryText} dark:${themeClasses.accentText} rounded-xl font-bold transition-all border ${themeClasses.primaryBorder} dark:${themeClasses.primaryBorder.replace('primary', 'accent')} shadow-sm`}>
               <HomeIcon className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm uppercase tracking-tight">INÍCIO</span>
+              <span className="text-sm tracking-tight">Início</span>
+            </button>
+
+            <button
+              onClick={onOpenPosture}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <Monitor className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-500 transition-colors" />
+              <span className="text-sm font-bold tracking-tight">Postura</span>
+            </button>
+
+            <button
+              onClick={onOpenTutorial}
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
+            >
+              <MousePointer2 className="w-4 h-4 flex-shrink-0 group-hover:text-amber-500 transition-colors" />
+              <span className="text-sm font-bold tracking-tight">Aula Teste</span>
             </button>
 
             <button
@@ -216,7 +235,7 @@ export const Home: React.FC<HomeViewProps> = ({
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
             >
               <BookOpen className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" />
-              <span className="text-sm font-bold uppercase tracking-tight">AULAS</span>
+              <span className="text-sm font-bold tracking-tight">Aulas</span>
             </button>
 
             {hasCoursesForPlan && (
@@ -225,7 +244,7 @@ export const Home: React.FC<HomeViewProps> = ({
                 className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
               >
                 <Video className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" />
-                <span className="text-sm font-bold uppercase tracking-tight">+ CURSOS</span>
+                <span className="text-sm font-bold tracking-tight">+ Cursos</span>
               </button>
             )}
 
@@ -512,6 +531,12 @@ export const Home: React.FC<HomeViewProps> = ({
                   no menu à esquerda e escolha a primeira lição do Módulo 1.
                 </p>
               </div>
+              <button
+                onClick={onOpenPosture}
+                className="shrink-0 px-10 py-5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-widest text-xs flex items-center gap-3 active:scale-95"
+              >
+                LIÇÃO DE POSTURA <Monitor className="w-5 h-5" />
+              </button>
               <button
                 onClick={onGoToLessons}
                 className="shrink-0 px-10 py-5 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-amber-500/20 uppercase tracking-widest text-xs flex items-center gap-3 active:scale-95"

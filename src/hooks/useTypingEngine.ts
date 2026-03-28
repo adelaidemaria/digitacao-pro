@@ -12,6 +12,8 @@ interface TypingStats {
 
 export const useTypingEngine = (text: string, settings: any, disabled: boolean = false) => {
   const [input, setInput] = useState('');
+  const [errorIndices, setErrorIndices] = useState<Set<number>>(new Set());
+  const [consecutiveErrors, setConsecutiveErrors] = useState(0);
   const [stats, setStats] = useState<TypingStats>({
     wpm: 0,
     accuracy: 100,
@@ -24,6 +26,8 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
 
   // Use refs to keep track of current state inside the event listener without dependencies
   const inputRef = useRef('');
+  const errorIndicesRef = useRef<Set<number>>(new Set());
+  const consecutiveErrorsRef = useRef(0);
   const statsRef = useRef<TypingStats>({
     wpm: 0,
     accuracy: 100,
@@ -37,6 +41,10 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
   const reset = useCallback(() => {
     setInput('');
     inputRef.current = '';
+    setErrorIndices(new Set());
+    errorIndicesRef.current = new Set();
+    setConsecutiveErrors(0);
+    consecutiveErrorsRef.current = 0;
     const initialStats = {
       wpm: 0,
       accuracy: 100,
@@ -60,6 +68,14 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
   useEffect(() => {
     inputRef.current = input;
   }, [input]);
+
+  useEffect(() => {
+    errorIndicesRef.current = errorIndices;
+  }, [errorIndices]);
+
+  useEffect(() => {
+    consecutiveErrorsRef.current = consecutiveErrors;
+  }, [consecutiveErrors]);
 
   useEffect(() => {
     statsRef.current = stats;
@@ -92,6 +108,8 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
     if (typedChar === targetChar) {
       const newInput = currentInput + typedChar;
       setInput(newInput);
+      setConsecutiveErrors(0);
+      consecutiveErrorsRef.current = 0;
       setStats(prev => ({ ...prev, correct: prev.correct + 1 }));
       
       // Finished the lesson?
@@ -108,6 +126,19 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
         });
       }
     } else {
+      // Increment consecutive errors
+      const newConsecutive = consecutiveErrorsRef.current + 1;
+      setConsecutiveErrors(newConsecutive);
+      consecutiveErrorsRef.current = newConsecutive;
+
+      // Mark this index as an error if it hasn't been already
+      if (!errorIndicesRef.current.has(currentInput.length)) {
+        const newErrorIndices = new Set(errorIndicesRef.current);
+        newErrorIndices.add(currentInput.length);
+        setErrorIndices(newErrorIndices);
+        errorIndicesRef.current = newErrorIndices;
+      }
+
       setStats(prev => {
         const totalAttempts = prev.correct + prev.errors + 1;
         const accuracy = totalAttempts > 0 ? Math.round((prev.correct / totalAttempts) * 100) : 100;
@@ -137,5 +168,5 @@ export const useTypingEngine = (text: string, settings: any, disabled: boolean =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  return { input, stats, reset, startTimer };
+  return { input, errorIndices, consecutiveErrors, stats, reset, startTimer };
 };

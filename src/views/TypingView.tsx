@@ -35,7 +35,14 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
   const [customWord, setCustomWord] = useState('');
   const [finalContent, setFinalContent] = useState(lesson.content);
 
-  const { input, stats, reset, startTimer } = useTypingEngine(finalContent, settings, !isStarted);
+  const { input, errorIndices, consecutiveErrors, stats, reset, startTimer } = useTypingEngine(finalContent, settings, !isStarted);
+  const [showCapsLockAlert, setShowCapsLockAlert] = useState(false);
+
+  useEffect(() => {
+    if (consecutiveErrors === 5) {
+      setShowCapsLockAlert(true);
+    }
+  }, [consecutiveErrors]);
 
   useEffect(() => {
     setFinalContent(lesson.content);
@@ -264,11 +271,20 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
                 {finalContent.split('').map((char, i) => {
                   let color = 'text-zinc-200 dark:text-zinc-800';
                   let extraClasses = '';
-                  if (i < input.length) color = 'text-zinc-800 dark:text-white opacity-20';
-                  if (i === input.length) {
-                    color = 'text-emerald-500 dark:text-emerald-400 font-black';
-                    extraClasses = 'bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-2 scale-110 shadow-sm relative before:absolute before:-bottom-2 before:left-0 before:w-full before:h-2 before:bg-emerald-500 before:rounded-full before:animate-pulse';
+                  
+                  if (i < input.length) {
+                    // Character already typed
+                    if (errorIndices.has(i)) {
+                      color = 'text-rose-500 dark:text-rose-400 font-bold';
+                    } else {
+                      color = 'text-emerald-500 dark:text-emerald-400 font-bold';
+                    }
+                  } else if (i === input.length) {
+                    // Current character to type
+                    color = 'text-zinc-800 dark:text-white font-black';
+                    extraClasses = 'bg-zinc-100 dark:bg-zinc-800 rounded-xl px-2 scale-110 shadow-sm relative before:absolute before:-bottom-2 before:left-0 before:w-full before:h-2 before:bg-blue-500 before:rounded-full before:animate-pulse';
                   }
+
                   return (
                     <span key={i} className={`transition-all duration-200 ${color} ${extraClasses}`}>
                       {char === ' ' ? '\u00A0' : char}
@@ -552,6 +568,38 @@ export const TypingView: React.FC<TypingViewProps> = ({ lesson, lessons, onCompl
               </div>
             </motion.div>
           </div>
+        )}
+        {showCapsLockAlert && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[600] flex items-center justify-center p-4 text-center"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden border border-rose-500/20 flex flex-col p-8 relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-rose-400 via-rose-500 to-rose-400" />
+              
+              <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-rose-50 dark:ring-rose-500/5">
+                <AlertCircle className="w-10 h-10 text-rose-500" />
+              </div>
+              
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-3 uppercase tracking-tight">Opa! Algo está errado?</h3>
+              <p className="text-base text-zinc-500 dark:text-zinc-400 font-bold mb-8 leading-relaxed">
+                Parece que esta tecla está difícil! <br/>
+                <span className="text-rose-500">Confira se o CapsLock está ligado</span> ou se está <span className="text-rose-500">DIGITANDO</span> a tecla certa.
+              </p>
+
+              <button 
+                onClick={() => setShowCapsLockAlert(false)}
+                className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-rose-500/30 uppercase tracking-[0.2em] text-sm active:scale-95"
+              >
+                ENTENDI, VOU CONFERIR!
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

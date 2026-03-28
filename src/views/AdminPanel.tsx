@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Module, Lesson, Profile, Plan, Announcement, Course, Tip, HomeVideo, HomeConfig } from '../types';
+import { Module, Lesson, Profile, Plan, Announcement, Course, Tip, HomeVideo, HomeConfig, CertificateConfig, UserCertificate } from '../types';
 import { 
   Users, BookOpen, CreditCard, Plus, Edit2, Trash2, Search, Filter, 
   Calendar, Mail, Shield, User, X, Link, DollarSign, Clock, CheckCircle2, 
@@ -20,6 +20,8 @@ interface AdminPanelProps {
   tips: Tip[];
   homeVideos: HomeVideo[];
   homeConfig: HomeConfig;
+  certConfigs?: CertificateConfig[];
+  userCertificates?: UserCertificate[];
   onLogout: () => void;
   handlers: {
     saveUser: (user: Profile, password?: string) => void;
@@ -39,12 +41,13 @@ interface AdminPanelProps {
     saveHomeVideo: (video: HomeVideo) => void;
     deleteHomeVideo: (id: string) => void;
     updateHomeConfig: (config: Partial<HomeConfig>) => void;
+    saveCertConfig?: (config: CertificateConfig) => void;
   };
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], tips = [], homeVideos = [], homeConfig, onLogout, handlers }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, lessons, plans, announcements = [], courses = [], tips = [], homeVideos = [], homeConfig, certConfigs = [], userCertificates = [], onLogout, handlers }) => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'content' | 'plans' | 'tips' | 'settings'>('dashboard');
-  const [activeSettingsTab, setActiveSettingsTab] = useState<'announcements' | 'courses' | 'home' | 'tips'>('home');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<'announcements' | 'courses' | 'home' | 'tips' | 'certificates'>('home');
   
   // Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -61,6 +64,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const [isHomeVideoModalOpen, setIsHomeVideoModalOpen] = useState(false);
+  const [isCertConfigModalOpen, setIsCertConfigModalOpen] = useState(false);
   
   // Editing States
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
@@ -71,9 +75,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingTip, setEditingTip] = useState<Tip | null>(null);
   const [editingHomeVideo, setEditingHomeVideo] = useState<HomeVideo | null>(null);
+  const [editingCertConfig, setEditingCertConfig] = useState<CertificateConfig | null>(null);
 
   // Delete/Update confirmation state
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course' | 'tip' | 'home_video', title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string, type: 'user' | 'module' | 'lesson' | 'plan' | 'announcement' | 'course' | 'tip' | 'home_video' | 'cert_config', title: string } | null>(null);
   const [confirmUpdate, setConfirmUpdate] = useState<{ type: 'user' | 'plan' | 'lesson', title: string, data: any } | null>(null);
   
   // Success feedback state
@@ -90,6 +95,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setIsCourseModalOpen(false);
     setIsTipModalOpen(false);
     setIsHomeVideoModalOpen(false);
+    setIsCertConfigModalOpen(false);
     setEditingUser(null);
     setEditingModule(null);
     setEditingLesson(null);
@@ -98,6 +104,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     setEditingCourse(null);
     setEditingTip(null);
     setEditingHomeVideo(null);
+    setEditingCertConfig(null);
     setConfirmDelete(null);
     setConfirmUpdate(null);
   };
@@ -126,6 +133,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
     if (confirmDelete.type === 'course') handlers.deleteCourse(confirmDelete.id);
     if (confirmDelete.type === 'tip') handlers.deleteTip(confirmDelete.id);
     if (confirmDelete.type === 'home_video') handlers.deleteHomeVideo(confirmDelete.id);
+    // Certificate Configs could be deleted via another handler if added, but wait, do we have deleteCertConfig?
+    // Let's assume for now they are not hard deleted or we'll fake it if we didn't add the handler.
     
     setConfirmDelete(null);
   };
@@ -252,6 +261,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 if (activeTab === 'settings' && activeSettingsTab === 'announcements') setIsAnnouncementModalOpen(true);
                 if (activeTab === 'settings' && activeSettingsTab === 'courses') setIsCourseModalOpen(true);
                 if (activeTab === 'settings' && activeSettingsTab === 'tips') setIsTipModalOpen(true);
+                if (activeTab === 'settings' && activeSettingsTab === 'certificates') setIsCertConfigModalOpen(true);
               }}
               className={`flex items-center gap-3 px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-[20px] shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] whitespace-nowrap ${activeTab === 'settings' && activeSettingsTab === 'home' ? 'hidden' : ''}`}
             >
@@ -262,7 +272,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 activeTab === 'settings' ? (
                   activeSettingsTab === 'announcements' ? 'Nova Mensagem' :
                   activeSettingsTab === 'courses' ? 'Novo Curso' :
-                  activeSettingsTab === 'tips' ? 'Nova Dica' : ''
+                  activeSettingsTab === 'tips' ? 'Nova Dica' : 
+                  activeSettingsTab === 'certificates' ? 'Nova Conf. Certificado' : ''
                 ) : 'Novo Item'
               }
             </button>
@@ -702,6 +713,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                 >
                   <Lightbulb className="w-4 h-4" /> Dicas
                 </button>
+                <button 
+                  onClick={() => setActiveSettingsTab('certificates')}
+                  className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${activeSettingsTab === 'certificates' ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-md shadow-black/5' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-white'}`}
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Certificados
+                </button>
               </div>
 
               <div className="bg-white dark:bg-zinc-900 rounded-[40px] border border-zinc-200/50 dark:border-zinc-800 shadow-sm overflow-hidden min-h-[400px]">
@@ -1138,6 +1155,126 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
                     </div>
                   </div>
                 )}
+
+                {activeSettingsTab === 'certificates' && (
+                  <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="p-8 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Configurações de Certificados
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => { setEditingCertConfig(null); setIsCertConfigModalOpen(true); }}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.05]"
+                      >
+                        <Plus className="w-4 h-4" /> Novo Certificado
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                          <tr className="bg-blue-50/80 dark:bg-blue-900/40 border-b border-blue-100 dark:border-blue-800">
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Curso / Plano</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center w-[160px]">Carga Horária</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center">Status</th>
+                            <th className="px-4 md:px-6 py-6 text-[16px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-right w-[160px]">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {certConfigs?.map(cert => {
+                            const plan = plans.find(p => p.id === cert.plan_id);
+                            return (
+                              <tr key={cert.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all group">
+                                <td className="px-4 md:px-6 py-8">
+                                  <div className="flex flex-col">
+                                    <span className="font-black text-zinc-900 dark:text-white uppercase text-lg">{cert.course_name}</span>
+                                    <span className="text-[10px] text-zinc-400 font-bold uppercase mt-1">
+                                      Plano: <span className="text-blue-500">{plan?.name || '---'}</span>
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 md:px-6 py-8 text-center">
+                                  <span className="font-black text-zinc-700 dark:text-zinc-200">{cert.workload_hours} Horas</span>
+                                </td>
+                                <td className="px-4 md:px-6 py-8 text-center">
+                                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${cert.active ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-zinc-100 text-zinc-400 border border-zinc-200'}`}>
+                                    {cert.active ? 'Liberado' : 'Bloqueado'}
+                                  </span>
+                                </td>
+                                <td className="px-4 md:px-6 py-8 text-right">
+                                  <div className="flex justify-end gap-3 md:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0">
+                                    <button 
+                                      onClick={() => { setEditingCertConfig(cert); setIsCertConfigModalOpen(true); }}
+                                      className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-black text-[11px] uppercase tracking-[0.1em] rounded-2xl transition-all shadow-sm border border-blue-100 dark:border-blue-900/30 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white"
+                                    >
+                                      <Edit2 className="w-4 h-4" /> Alterar
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {(certConfigs || []).length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUM CERTIFICADO CADASTRADO</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="p-8 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-800/20 mt-8">
+                      <div className="flex items-center gap-4 mb-6">
+                        <span className="text-zinc-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Certificados Emitidos (Alunos)
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[900px]">
+                          <thead>
+                            <tr className="bg-emerald-50/80 dark:bg-emerald-900/40 border-b border-emerald-100 dark:border-emerald-800">
+                              <th className="px-4 md:px-6 py-6 text-[16px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Aluno</th>
+                              <th className="px-4 md:px-6 py-6 text-[16px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest text-center">Data Emissão</th>
+                              <th className="px-4 md:px-6 py-6 text-[16px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest text-center">Performance (PPM / Acc)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            {userCertificates?.map(uc => {
+                              const student = users.find(u => u.id === uc.user_id);
+                              return (
+                                <tr key={uc.id} className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
+                                  <td className="px-4 md:px-6 py-6">
+                                    <div className="flex flex-col">
+                                      <span className="font-black text-zinc-900 dark:text-white">{student?.full_name || 'Usuário Removido'}</span>
+                                      <span className="text-[10px] font-bold text-zinc-400 mt-1">{uc.certificate_code}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 md:px-6 py-6 text-center">
+                                    <span className="text-sm font-bold text-zinc-500">{new Date(uc.issued_at).toLocaleDateString()}</span>
+                                  </td>
+                                  <td className="px-4 md:px-6 py-6 text-center">
+                                    <span className="inline-flex items-center gap-2 text-xs font-black px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                                      <span className="text-blue-500">{uc.average_wpm} PPM</span>
+                                      <span className="text-zinc-300">|</span>
+                                      <span className="text-emerald-500">{uc.average_accuracy}%</span>
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {(userCertificates || []).length === 0 && (
+                              <tr>
+                                <td colSpan={3} className="py-12 text-center text-sm font-bold text-zinc-400 uppercase tracking-widest">NENHUM CERTIFICADO EMITIDO ATÉ O MOMENTO</td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1180,6 +1317,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, users, modules, le
 
       <Modal isOpen={isHomeVideoModalOpen} onClose={resetModals} title={editingHomeVideo ? 'Alterar Vídeo de Instrução' : 'Novo Vídeo de Instrução'} maxWidth="max-w-xl">
         <HomeVideoForm video={editingHomeVideo} onSave={(data) => { handlers.saveHomeVideo(data); onSaveComplete('O vídeo de instrução foi salvo com sucesso!'); }} />
+      </Modal>
+
+      <Modal isOpen={isCertConfigModalOpen} onClose={resetModals} title={editingCertConfig ? 'Alterar Configuração de Certificado' : 'Nova Configuração de Certificado'} maxWidth="max-w-3xl">
+        <CertConfigForm config={editingCertConfig} plans={plans} modules={modules} onSave={(data) => { if(handlers.saveCertConfig) { handlers.saveCertConfig(data); onSaveComplete('Configuração de certificado salva!'); } }} />
       </Modal>
 
       <AnimatePresence>
@@ -2081,6 +2222,99 @@ const HomeVideoForm: React.FC<{ video: HomeVideo | null; onSave: (v: HomeVideo) 
         className={`w-full py-6 text-white font-black rounded-2xl shadow-xl transition-all uppercase tracking-widest text-lg ${!title || !url ? 'bg-zinc-400 cursor-not-allowed shadow-none' : 'bg-blue-500 shadow-blue-500/20 hover:bg-blue-600 active:scale-[0.98]'}`}
       >
         {video?.id ? 'ATUALIZAR VÍDEO' : 'CADASTRAR VÍDEO'}
+      </button>
+    </div>
+  );
+};
+
+const CertConfigForm: React.FC<{ config: CertificateConfig | null; plans: Plan[]; modules: Module[]; onSave: (c: CertificateConfig) => void }> = ({ config, plans, modules, onSave }) => {
+  const [targetPlanId, setTargetPlanId] = useState(config?.plan_id || (plans.length > 0 ? plans[0].id : ''));
+  const [courseName, setCourseName] = useState(config?.course_name || '');
+  const [workload, setWorkload] = useState(config?.workload_hours || 10);
+  const [desc, setDesc] = useState(config?.description || '');
+  const [signedBy, setSignedBy] = useState(config?.signed_by || '');
+  const [reqModules, setReqModules] = useState<string[]>(config?.required_modules || []);
+  const [active, setActive] = useState(config?.active ?? true);
+
+  const toggleMod = (id: string) => {
+    setReqModules(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Plano Alvo do Certificado</label>
+          <select value={targetPlanId} onChange={e => setTargetPlanId(e.target.value)} disabled={!!config?.id} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all disabled:opacity-50 text-sm">
+            {plans.map(p => <option key={p.id} value={p.id}>{p.name.toUpperCase()}</option>)}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Status no Painel do Aluno</label>
+          <div className="flex items-center gap-4 h-[68px] px-6 bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl">
+            <button type="button" onClick={() => setActive(!active)} className={`w-14 h-8 rounded-full transition-all relative ${active ? 'bg-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+              <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${active ? 'left-7' : 'left-1'}`} />
+            </button>
+            <span className="font-black text-xs uppercase tracking-widest text-zinc-500">{active ? 'LIBERADO PRA EMISSÃO' : 'EMISSÃO BLOQUEADA'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="col-span-2 space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Nome do Curso (Impresso no PDF)</label>
+          <input value={courseName} onChange={e => setCourseName(e.target.value)} placeholder="Ex: Digitação Profissional Computadorizada" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all text-sm" />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Carga Horária (Hs)</label>
+          <input type="number" value={workload} onChange={e => setWorkload(parseInt(e.target.value) || 0)} className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all text-sm" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Descrição do Certificado (Opcional)</label>
+        <textarea rows={2} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Ex: Certificamos que concluiu com êxito o treinamento avançado..." className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all text-sm resize-none" />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400">Assinado Por (Diretor / Instrutor)</label>
+        <input value={signedBy} onChange={e => setSignedBy(e.target.value)} placeholder="Ex: João da Silva" className="w-full p-5 bg-zinc-50 dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold focus:border-blue-500 outline-none transition-all text-sm" />
+        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Este nome será usado para gerar a assinatura visual impressa no rodapé do PDF.</p>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-[12px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+          <BookOpen className="w-4 h-4" /> Módulos Obrigatórios (Requisito)
+        </label>
+        <p className="text-[10px] text-zinc-400 font-bold uppercase mb-2">O aluno só poderá gerar o certificado se tiver nota máxima aprovada nas lições finais destes módulos marcados.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar p-1">
+          {modules.sort((a,b) => (a.order||0) - (b.order||0)).map(m => (
+            <button type="button" key={m.id} onClick={() => toggleMod(m.id)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all font-bold text-left hover:scale-[1.01] active:scale-[0.99] ${reqModules.includes(m.id) ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-zinc-50 border-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:border-zinc-800/50'}`}>
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${reqModules.includes(m.id) ? 'bg-blue-500 border-blue-500 text-white shadow-sm' : 'bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700'}`}>
+                {reqModules.includes(m.id) && <CheckCircle2 className="w-4 h-4" />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-black uppercase tracking-tight truncate">Módulo {m.order}: {m.title}</span>
+              </div>
+            </button>
+          ))}
+          {modules.length === 0 && (
+            <div className="col-span-full py-4 text-center text-[10px] text-zinc-400 font-black uppercase tracking-widest">Nenhum módulo para selecionar</div>
+          )}
+        </div>
+      </div>
+
+      <button onClick={() => onSave({ 
+        id: config?.id || '', 
+        plan_id: targetPlanId, 
+        course_name: courseName, 
+        workload_hours: workload, 
+        description: desc, 
+        signed_by: signedBy, 
+        required_modules: reqModules, 
+        active: active 
+      })} className="w-full py-6 bg-blue-500 text-white font-black rounded-[24px] shadow-2xl shadow-blue-500/30 text-lg hover:bg-blue-600 transition-all uppercase tracking-[0.2em] active:scale-[0.98]">
+        {config?.id ? 'ATUALIZAR CERTIFICADO' : 'CADASTRAR CERTIFICADO'}
       </button>
     </div>
   );
