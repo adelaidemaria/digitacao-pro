@@ -235,7 +235,7 @@ export const Home: React.FC<HomeViewProps> = ({
               className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-700 dark:hover:text-zinc-300 rounded-xl font-medium transition-all text-sm group"
             >
               <BookOpen className="w-4 h-4 flex-shrink-0 group-hover:text-blue-500 transition-colors" />
-              <span className="text-sm font-bold tracking-tight">Aulas</span>
+              <span className="text-sm font-bold tracking-tight">Curso Digitação</span>
             </button>
 
             {hasCoursesForPlan && (
@@ -526,7 +526,7 @@ export const Home: React.FC<HomeViewProps> = ({
                 <p className="text-amber-700/70 dark:text-amber-400/60 font-bold italic leading-relaxed">
                   Para começar seus estudos, clique em{' '}
                   <span className="text-amber-600 dark:text-amber-400 px-2.5 py-1 bg-amber-200/50 dark:bg-amber-400/10 rounded-xl mx-1 inline-flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" /> AULAS
+                    <BookOpen className="w-4 h-4" /> CURSO DIGITAÇÃO
                   </span>{' '}
                   no menu à esquerda e escolha a primeira lição do Módulo 1.
                 </p>

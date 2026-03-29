@@ -186,7 +186,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <MousePointer2 className="w-4 h-4 flex-shrink-0 group-hover:text-amber-500 transition-colors" /> <span className="text-sm font-bold tracking-tight">Aula Teste</span>
             </button>
             <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all border border-blue-100 dark:border-blue-500/20 shadow-sm">
-              <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">Aulas</span>
+              <BookOpen className="w-4 h-4 flex-shrink-0" /> <span className="text-sm">Curso Digitação</span>
             </button>
             {hasCoursesForPlan && (
               <button 

@@ -217,7 +217,7 @@ export const FingerTutorialView: React.FC<{ onBack: () => void }> = ({ onBack })
               
               <h2 className="text-3xl font-black text-zinc-900 dark:text-white mb-3 tracking-tighter uppercase">Aula Concluída!</h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 font-bold mb-8 leading-relaxed">
-                As posições básicas foram aprendidas. Agora você pode prosseguir para as lições.
+                As posições básicas foram aprendidas. Agora você pode prosseguir para o curso.
               </p>
 
               <div className="space-y-3">
@@ -225,7 +225,7 @@ export const FingerTutorialView: React.FC<{ onBack: () => void }> = ({ onBack })
                   onClick={onBack}
                   className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs flex items-center justify-center gap-3"
                 >
-                  Ir para as Aulas <ArrowRight className="w-4 h-4" />
+                  Ir para o Curso <ArrowRight className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => {

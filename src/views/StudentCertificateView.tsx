@@ -98,7 +98,7 @@ export const StudentCertificateView: React.FC<StudentCertificateViewProps> = ({
     setIsGenerating(true);
     
     try {
-      // Pequeno timeout para o navegador renderizar a tela de "Gerando..."
+      // Simula um pequeno delay para a interface reagir
       await new Promise(r => setTimeout(r, 600));
       
       const success = await generatorRef.current.generatePDF();
@@ -242,7 +242,7 @@ export const StudentCertificateView: React.FC<StudentCertificateViewProps> = ({
             
             {/* Preview (Scaled down visually) */}
             <div className="w-full overflow-hidden rounded-[40px] shadow-2xl bg-zinc-100 dark:bg-zinc-800 p-8 border border-zinc-200 dark:border-zinc-700 flex justify-center">
-              <div className="w-full max-w-[1123px] transform-gpu scale-[0.3] h-[240px] xs:scale-[0.4] xs:h-[320px] sm:scale-[0.6] sm:h-[480px] md:scale-[0.7] md:h-[560px] lg:scale-100 lg:h-auto origin-top transition-transform duration-500">
+              <div className="w-full max-w-[1123px] transform-gpu scale-[0.3] h-[260px] xs:scale-[0.4] xs:h-[340px] sm:scale-[0.6] sm:h-[520px] md:scale-[0.7] md:h-[600px] lg:scale-100 lg:h-auto origin-top transition-transform duration-500">
                 <CertificateGenerator 
                   config={config}
                   student={user}
@@ -256,20 +256,8 @@ export const StudentCertificateView: React.FC<StudentCertificateViewProps> = ({
         )}
 
 
-        {/* 1. HIDDEN GENERATOR (OFF-SCREEN) */}
-        {/* We keep it OPAQUE and VISIBLE but at -10000px so html2canvas can capture it perfectly */}
-        <div 
-          id="generator-capture-zone"
-          style={{ 
-            position: 'fixed', 
-            left: '-10000px', 
-            top: '0', 
-            width: '1123px', 
-            height: '794px', 
-            zIndex: -100,
-            overflow: 'hidden'
-          }}
-        >
+        {/* Hidden Generator just to capture the ref and allow generating PDF at any step without DOM visual constraints */}
+        <div className="hidden">
           <CertificateGenerator 
             ref={generatorRef}
             config={config}
